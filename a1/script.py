@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import scipy
 import math
-
 from torch.utils.data import DataLoader
 
 from a1.dataset import Dataset
@@ -56,10 +55,10 @@ train_data = Dataset(train_x, train_y)
 train_dataloader = DataLoader(train_data, batch_size=100, drop_last=True)
 
 test_data = Dataset(test_x, test_y)
-test_dataloader = DataLoader(test_data, batch_size=100)
+test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
 
 
-# #Train the model
+# Train the model
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
@@ -67,21 +66,21 @@ model = ANN(input_shape, 2500, num_classes).to(device)
 print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 if train_time:
-    epochs = 200
+    epochs = 100
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
         #test(test_dataloader, model, loss_fn)
     print("Done!")
-
-else:
     torch.save(model.state_dict(), "model.pth")
     print("Saved PyTorch Model State to model.pth")
 
+else:
     model.load_state_dict(torch.load("model.pth"))
+    test(test_dataloader, model, loss_fn)
 
 
 

@@ -1,17 +1,26 @@
 import torch
+import matplotlib.pyplot as plt
+import numpy as np
 
 device = "cpu"
+
+
 def test(dataloader, model, loss_fn):
-    size = len(dataloader.dataset)
     num_batches = len(dataloader)
     model.eval()
-    test_loss, correct = 0, 0
+    test_loss = 0
     with torch.no_grad():
-        for X, y in dataloader:
+        for batch, (X, y) in enumerate(dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
             test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+            if batch == 0:
+                plt.plot(np.arange(y.shape[0]), y[:, 0])
+                plt.plot(np.arange(y.shape[0]), pred[:, 0])
+                plt.xlabel('t')
+                plt.ylabel('Voltage')
+                plt.title('Voltage on node #1')
+                plt.legend(['Actual', 'Estimated'])
+                plt.show()
     test_loss /= num_batches
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+

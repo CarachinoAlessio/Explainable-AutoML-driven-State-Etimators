@@ -1,10 +1,9 @@
 import torch
 
 device = "cpu"
+
+
 class Dataset(torch.utils.data.Dataset):
-    '''
-  Prepare the Boston dataset for regression
-  '''
     def __init__(self, input, output):
         self.X = torch.tensor(input, dtype=torch.float32).to(device)
         self.Y = torch.tensor(output, dtype=torch.float32).to(device)
