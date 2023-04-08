@@ -3,7 +3,15 @@ import torch.nn as nn
 import scipy
 import math
 
+from torch.utils.data import DataLoader
+
+from a1.dataset import Dataset
 from a1.network import ANN
+from a1.train import train
+from a1.test import test
+
+torch.manual_seed(42)
+train_time = False
 
 device = (
     "cuda"
@@ -39,10 +47,46 @@ test_y = data_y[:split_train, :]
 train_x = data_x[split_train:, :]
 train_y = data_y[split_train:, :]
 
+print(train_x.shape)
+print(train_y.shape)
+print(test_x.shape)
+print(test_y.shape)
+
+train_data = Dataset(train_x, train_y)
+train_dataloader = DataLoader(train_data, batch_size=100, drop_last=True)
+
+test_data = Dataset(test_x, test_y)
+test_dataloader = DataLoader(test_data, batch_size=100)
+
+
 # #Train the model
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
 model = ANN(input_shape, 2500, num_classes).to(device)
+print(model)
+
+loss_fn = nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+
+if train_time:
+    epochs = 200
+    for t in range(epochs):
+        print(f"Epoch {t + 1}\n-------------------------------")
+        train(train_dataloader, model, loss_fn, optimizer)
+        #test(test_dataloader, model, loss_fn)
+    print("Done!")
+
+else:
+    torch.save(model.state_dict(), "model.pth")
+    print("Saved PyTorch Model State to model.pth")
+
+    model.load_state_dict(torch.load("model.pth"))
+
+
+
+
+
+
 
 
