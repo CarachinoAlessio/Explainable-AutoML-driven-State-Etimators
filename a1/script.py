@@ -4,13 +4,15 @@ import scipy
 import math
 from torch.utils.data import DataLoader
 
+import parser
 from a1.dataset import Dataset
 from a1.network import ANN
 from a1.train import train
 from a1.test import test
 
+args = parser.parse_arguments()
 torch.manual_seed(42)
-train_time = False
+train_time = args.train
 
 device = (
     "cuda"
@@ -55,7 +57,8 @@ train_data = Dataset(train_x, train_y)
 train_dataloader = DataLoader(train_data, batch_size=100, drop_last=True)
 
 test_data = Dataset(test_x, test_y)
-test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+#test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 
 
 # Train the model

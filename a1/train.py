@@ -1,4 +1,5 @@
-device="cpu"
+device = "cpu"
+
 
 def train(dataloader, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
@@ -15,6 +16,6 @@ def train(dataloader, model, loss_fn, optimizer):
         loss.backward()
         optimizer.step()
 
-        if batch == (len(dataloader)-1):
+        if batch == (len(dataloader) - 1):
             loss, current = loss.item(), (batch + 1) * len(X)
             print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
