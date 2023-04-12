@@ -3,6 +3,7 @@ import torch.nn as nn
 import scipy
 import math
 from torch.utils.data import DataLoader
+import shap
 
 import parser
 from a1.dataset import Dataset
@@ -83,7 +84,18 @@ if train_time:
 
 else:
     model.load_state_dict(torch.load("model.pth"))
-    test(test_dataloader, model, loss_fn)
+    batch = next(iter(test_dataloader))
+    measurements, _ = batch
+
+    background = measurements[:100].to(device)
+    to_be_explained = measurements[100:105].to(device)
+
+    explainer = shap.DeepExplainer(model, background)
+    shap_values = explainer.shap_values(to_be_explained)
+
+    shap.summary_plot(shap_values, background, plot_type="bar", show=True, class_inds=[0])
+
+    #test(test_dataloader, model, loss_fn)
 
 
 
