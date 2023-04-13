@@ -16,6 +16,7 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
         for batch, (X, y) in enumerate(dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
+            print(f"GT: {y[100][0]}, ES: {pred[100][0]}")
             test_loss += loss_fn(pred, y).item()
             if plot_predictions and batch == 0:
                 plt.plot(np.arange(y.shape[0]), y[:, 0])

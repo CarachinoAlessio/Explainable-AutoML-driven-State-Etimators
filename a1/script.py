@@ -16,6 +16,8 @@ args = parser.parse_arguments()
 torch.manual_seed(42)
 train_time = args.train
 shap_values_time = args.shap_values
+verbose = args.verbose
+shapv2 = False
 
 device = (
     "cuda"
@@ -37,13 +39,14 @@ data = scipy.io.loadmat('data_for_SE_case' + str(caseNo) + '_for_ML.mat')
 data_x = data['Z_measure']
 data_y = data['Output']
 
-data_x = data_x[0:data_y.shape[0],
-         :]  # this is because measurement are available for 4 and half years but state estimation is available only for two years for IEEE 118
+# this is because measurement are available for 4 and half years but state estimation is available only for two years for IEEE 118
+data_x = data_x[0:data_y.shape[0], :]
 
 data_y[:, 0:caseNo] = weight_4_mag * data_y[:, 0:caseNo]
 data_y[:, caseNo:] = weight_4_ang * data_y[:, caseNo:]
-print(data_x.shape)
-print(data_y.shape)
+if verbose:
+    print(data_x.shape)
+    print(data_y.shape)
 
 # separate them into training 40%, test 60%
 split_train = int(0.6 * data_x.shape[0])
@@ -52,10 +55,11 @@ test_y = data_y[:split_train, :]
 train_x = data_x[split_train:, :]
 train_y = data_y[split_train:, :]
 
-print(train_x.shape)
-print(train_y.shape)
-print(test_x.shape)
-print(test_y.shape)
+if verbose:
+    print(train_x.shape)
+    print(train_y.shape)
+    print(test_x.shape)
+    print(test_y.shape)
 
 train_data = Dataset(train_x, train_y)
 train_dataloader = DataLoader(train_data, batch_size=100, drop_last=True)
@@ -69,7 +73,8 @@ input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
 model = ANN(input_shape, 2500, num_classes).to(device)
-print(model)
+if verbose:
+    print(model)
 
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
@@ -86,22 +91,65 @@ if train_time:
 
 else:
     model.load_state_dict(torch.load("model.pth"))
-    batch = next(iter(test_dataloader))
-    measurements, _ = batch
+    test(test_dataloader, model, loss_fn)
 
-    background = measurements[:100].to(device)
-    to_be_explained = measurements[100:105].to(device)
+    if not shapv2:
+        batch = next(iter(test_dataloader))
+        measurements, _ = batch
+        estimations = model(measurements).detach().numpy()
+        background = measurements[:100].to(device)
+        if shap_values_time:
+            to_be_explained = measurements[100:150].to(device)
 
-    if shap_values_time:
-        explainer = shap.DeepExplainer(model, background)
-        shap_values = explainer.shap_values(to_be_explained)
-        with open('shap_values.npy', 'wb') as f:
-            np.save(f, np.array(shap_values))
+            explainer = shap.DeepExplainer(model, background)
+            '''
+            with open('explainer', 'wb') as f:
+                explainer.save(f, model)
+            with open('explainer', 'rb') as f:
+                explainer = shap.DeepExplainer.load('explainer', model)
+            '''
+
+            shap_values = explainer.shap_values(to_be_explained)
+            print("Saving shap_values on file...")
+            with open('shap_values.npy', 'wb') as f:
+                np.save(f, np.array(shap_values))
+        else:
+            print("Loading shap_values from file...")
+            with open('shap_values.npy', 'rb') as f:
+                shap_values = list(np.load(f))
+
+            ## I am interested only in shap values, after 100 time instants, of voltage magnitudes of node #1 (50 time instants)
+            shap_values_node_1 = shap_values[0]
+            shap.summary_plot(shap_values_node_1, plot_type="bar", max_display=12, class_inds=[0])
+            shap.summary_plot(shap_values_node_1, plot_type="violin", max_display=12, class_inds=[0])
+
+            ## I am interested only in shap values of voltage magnitudes of node #1 (first time instant)
+            node_1_estimation = estimations[100]
+            #shap.plots._waterfall.waterfall_legacy(explainer.expected_value, shap_values[0])
+            shap.plots._waterfall.waterfall_legacy(node_1_estimation[0], shap_values_node_1[0])
+
+
+        # shap.plots.heatmap(shap_values)
+        # shap.bar_plot(shap_values)
+        # shap.plots.beeswarm(shap_values)
+        # shap.plots.heatmap(shap_values, max_display=12)
+        # shap.plots.bar(shap_values[0])
+
+        # test(test_dataloader, model, loss_fn)
     else:
-        print("Loading shap_values from file...")
-        with open('shap_values.npy', 'rb') as f:
-            shap_values = list(np.load(f))
+        batch = next(iter(test_dataloader))
+        measurements, _ = batch
+        background = measurements[:100].to(device)
+        if shap_values_time:
+            # to_be_explained = measurements[10:11].to(device)
 
-    shap.summary_plot(shap_values, background, plot_type="bar", class_inds=[0])
-    #shap.plots.bar(shap_values[0])
-    # test(test_dataloader, model, loss_fn)
+            explainer = shap.KernelExplainer(model(background), data=background, link="identity")
+            shap_values = explainer.shap_values(X=background[0:1, :])
+            print("Saving shap_values on file...")
+
+            with open('shap_valuesv2.npy', 'wb') as f:
+                np.save(f, np.array(shap_values))
+        else:
+            print("Loading shap_values from file...")
+            with open('shap_valuesv2.npy', 'rb') as f:
+                shap_values = list(np.load(f))
