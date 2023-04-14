@@ -8,6 +8,7 @@ from tabulate import tabulate
 device = "cpu"
 caseNo = 118
 
+
 def test(dataloader, model, loss_fn, plot_predictions=False):
     num_batches = len(dataloader)
     model.eval()
@@ -16,7 +17,7 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
         for batch, (X, y) in enumerate(dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
-            print(f"GT: {y[100][0]}, ES: {pred[100][0]}")
+            print(f"Results for node 1 (voltage magnitude) after 100 time instants:\nGT: {y[100][0]}, ES: {pred[100][0]}")
             test_loss += loss_fn(pred, y).item()
             if plot_predictions and batch == 0:
                 plt.plot(np.arange(y.shape[0]), y[:, 0])
@@ -31,7 +32,8 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
     mape = MeanAbsolutePercentageError()
     mse = MeanSquaredError()
     columns = ["MAE", "MAPE", "RMSE"]
-    vmagnitudes_results = [[mae(pred[:, :caseNo], y[:, :caseNo]), mape(pred[:, :caseNo],y[:, :caseNo]), torch.sqrt(mse(pred[:, :caseNo], y[:, :caseNo]))]]
+    vmagnitudes_results = [[mae(pred[:, :caseNo], y[:, :caseNo]), mape(pred[:, :caseNo], y[:, :caseNo]),
+                            torch.sqrt(mse(pred[:, :caseNo], y[:, :caseNo]))]]
     vangles_results = [[mae(pred[:, caseNo:], y[:, caseNo:]), None, torch.sqrt(mse(pred[:, caseNo:], y[:, caseNo:]))]]
 
     print("------------------------------------------")
@@ -43,9 +45,3 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
     print(f"     V Angles")
     dt1 = pd.DataFrame(vangles_results, columns=columns)
     print(tabulate(dt1, headers='keys', tablefmt='psql', showindex=False))
-
-
-
-
-
-

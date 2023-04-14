@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 import shap
 
 import numpy as np
+import matplotlib.pyplot as plt
 import parser
 from a1.dataset import Dataset
 from a1.network import ANN
@@ -17,7 +18,6 @@ torch.manual_seed(42)
 train_time = args.train
 shap_values_time = args.shap_values
 verbose = args.verbose
-shapv2 = False
 
 device = (
     "cuda"
@@ -93,63 +93,52 @@ else:
     model.load_state_dict(torch.load("model.pth"))
     test(test_dataloader, model, loss_fn)
 
-    if not shapv2:
-        batch = next(iter(test_dataloader))
-        measurements, _ = batch
-        estimations = model(measurements).detach().numpy()
-        background = measurements[:100].to(device)
-        if shap_values_time:
-            to_be_explained = measurements[100:150].to(device)
+    batch = next(iter(test_dataloader))
+    measurements, _ = batch
+    estimations = model(measurements).detach().numpy()
+    background = measurements[:100].to(device)
+    if shap_values_time:
+        to_be_explained = measurements[100:150].to(device)
 
-            explainer = shap.DeepExplainer(model, background)
-            '''
-            with open('explainer', 'wb') as f:
-                explainer.save(f, model)
-            with open('explainer', 'rb') as f:
-                explainer = shap.DeepExplainer.load('explainer', model)
-            '''
-
-            shap_values = explainer.shap_values(to_be_explained)
-            print("Saving shap_values on file...")
-            with open('shap_values.npy', 'wb') as f:
-                np.save(f, np.array(shap_values))
-        else:
-            print("Loading shap_values from file...")
-            with open('shap_values.npy', 'rb') as f:
-                shap_values = list(np.load(f))
-
-            ## I am interested only in shap values, after 100 time instants, of voltage magnitudes of node #1 (50 time instants)
-            shap_values_node_1 = shap_values[0]
-            shap.summary_plot(shap_values_node_1, plot_type="bar", max_display=12, class_inds=[0])
-            shap.summary_plot(shap_values_node_1, plot_type="violin", max_display=12, class_inds=[0])
-
-            ## I am interested only in shap values of voltage magnitudes of node #1 (first time instant)
-            node_1_estimation = estimations[100]
-            #shap.plots._waterfall.waterfall_legacy(explainer.expected_value, shap_values[0])
-            shap.plots._waterfall.waterfall_legacy(node_1_estimation[0], shap_values_node_1[0])
-
-
-        # shap.plots.heatmap(shap_values)
-        # shap.bar_plot(shap_values)
-        # shap.plots.beeswarm(shap_values)
-        # shap.plots.heatmap(shap_values, max_display=12)
-        # shap.plots.bar(shap_values[0])
-
-        # test(test_dataloader, model, loss_fn)
+        explainer = shap.DeepExplainer(model, background)
+        shap_values = explainer.shap_values(to_be_explained)
+        print("Saving shap_values on file...")
+        with open('shap_values.npy', 'wb') as f:
+            np.save(f, np.array(shap_values))
     else:
-        batch = next(iter(test_dataloader))
-        measurements, _ = batch
-        background = measurements[:100].to(device)
-        if shap_values_time:
-            # to_be_explained = measurements[10:11].to(device)
+        print("Loading shap_values from file...")
+        with open('shap_values.npy', 'rb') as f:
+            shap_values = list(np.load(f))
 
-            explainer = shap.KernelExplainer(model(background), data=background, link="identity")
-            shap_values = explainer.shap_values(X=background[0:1, :])
-            print("Saving shap_values on file...")
+        ## I am interested only in shap values, after 100 time instants, of voltage magnitudes of node #1 (50 time instants)
+        shap_values_node_1 = shap_values[0]
+        shap.summary_plot(shap_values_node_1, plot_type="bar", max_display=12, class_inds=[0])
+        shap.summary_plot(shap_values_node_1, plot_type="violin", max_display=12, class_inds=[0])
 
-            with open('shap_valuesv2.npy', 'wb') as f:
-                np.save(f, np.array(shap_values))
-        else:
-            print("Loading shap_values from file...")
-            with open('shap_valuesv2.npy', 'rb') as f:
-                shap_values = list(np.load(f))
+        ## I am interested only in shap values of voltage magnitudes of node #1 (first time instant)
+        node_1_estimation = estimations[100]
+        #shap.plots._waterfall.waterfall_legacy(explainer.expected_value, shap_values[0])
+        shap.plots._waterfall.waterfall_legacy(node_1_estimation[0], shap_values_node_1[0])
+
+        data = shap_values_node_1[0][:562].reshape((1,562))
+
+        plt.figure()
+        fig, ax = plt.subplots(figsize=(100, 5))
+
+        im = ax.imshow(data)
+
+        ax.set_xticks(np.arange(len(data[0])))
+        ax.set_yticks(np.arange(len(data)))
+        ax.set_xticklabels(
+            ['f'+str(i) for i in range(data.shape[1])])
+        ax.set_yticklabels(['row1'])
+
+
+        plt.setp(ax.get_xticklabels(), rotation=90, ha="right",
+                 rotation_mode="anchor")
+
+        ax.set_title("Node 1 voltage magnitude explanation at t=100")
+        fig.tight_layout()
+        plt.show()
+
+    # test(test_dataloader, model, loss_fn)
