@@ -91,7 +91,7 @@ if train_time:
 
 else:
     model.load_state_dict(torch.load("model.pth"))
-    test(test_dataloader, model, loss_fn)
+    test(test_dataloader, model, loss_fn, plot_predictions=True)
 
     batch = next(iter(test_dataloader))
     measurements, _ = batch
@@ -117,10 +117,10 @@ else:
 
         ## I am interested only in shap values of voltage magnitudes of node #1 (first time instant)
         node_1_estimation = estimations[100]
-        #shap.plots._waterfall.waterfall_legacy(explainer.expected_value, shap_values[0])
+        # shap.plots._waterfall.waterfall_legacy(explainer.expected_value, shap_values[0])
         shap.plots._waterfall.waterfall_legacy(node_1_estimation[0], shap_values_node_1[0])
 
-        data = shap_values_node_1[0][:562].reshape((1,562))
+        data = shap_values_node_1[0][:562].reshape((1, 562))
 
         plt.figure()
         fig, ax = plt.subplots(figsize=(100, 5))
@@ -130,9 +130,8 @@ else:
         ax.set_xticks(np.arange(len(data[0])))
         ax.set_yticks(np.arange(len(data)))
         ax.set_xticklabels(
-            ['f'+str(i) for i in range(data.shape[1])])
+            ['f' + str(i) for i in range(data.shape[1])])
         ax.set_yticklabels(['row1'])
-
 
         plt.setp(ax.get_xticklabels(), rotation=90, ha="right",
                  rotation_mode="anchor")
@@ -140,5 +139,6 @@ else:
         ax.set_title("Node 1 voltage magnitude explanation at t=100")
         fig.tight_layout()
         plt.show()
+        print("All plots have been generated.")
 
     # test(test_dataloader, model, loss_fn)
