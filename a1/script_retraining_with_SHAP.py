@@ -3,14 +3,12 @@ import torch.nn as nn
 import scipy
 import math
 from torch.utils.data import DataLoader
-import shap
 
 import numpy as np
-import matplotlib.pyplot as plt
 import parser
 from a1.dataset import Dataset
 from a1.network import ANN
-from a1.retrain import get_incr_data_and_shap_values
+from a1.retrain import get_incr_data_and_shap_values, retrain
 from a1.train import train
 from a1.test import test_before_retraining
 from sklearn.model_selection import train_test_split
@@ -18,6 +16,7 @@ from sklearn.model_selection import train_test_split
 args = parser.parse_arguments()
 torch.manual_seed(42)
 train_time = args.train
+retrain_time = False
 shap_values_time = args.shap_values
 verbose = args.verbose
 s = args.s
@@ -72,7 +71,7 @@ train_data = Dataset(train_x, train_y)
 train_dataloader = DataLoader(train_data, batch_size=100, drop_last=True)
 
 val_data = Dataset(val_x, val_y)
-val_dataloader = DataLoader(val_data, batch_size=int(len(val_data)/s), drop_last=False)
+val_dataloader = DataLoader(val_data, batch_size=int(len(val_data) / s), drop_last=False)
 
 test_data = Dataset(test_x, test_y)
 # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
@@ -107,5 +106,24 @@ print("--------- Testing the baseline... ---------")
 test_before_retraining(test_dataloader, model, loss_fn, no_samples=200, plot_predictions=True)
 
 print("--------- Starting the retraining process ---------")
-incremental_data, shap_list = get_incr_data_and_shap_values(val_dataloader, model, loss_fn, voltage_threshold=0.27)
+incr_dataloader, shap_list = get_incr_data_and_shap_values(val_dataloader, model, loss_fn, voltage_threshold=0.27)
+shap_multiplier = 10
+shap_sum = np.sum(shap_list[:118], axis=2).T  # result size: (58, 118)
+shap_sum = np.sum(shap_sum, axis=1)
+
+weights = torch.from_numpy(shap_multiplier * abs((shap_sum - np.mean(shap_sum)) / np.std(shap_sum)))
+
+if retrain_time:
+    epochs = 1000
+    loss_fn = nn.MSELoss(reduction='none')
+    for t in range(epochs):
+        retrain(incr_dataloader, weights, model, loss_fn, optimizer)
+    print("Done!")
+    torch.save(model.state_dict(), "retrained_model.pth")
+    print("Saved PyTorch Model State to retrained_model.pth")
+
+model.load_state_dict(torch.load("retrained_model.pth"))
+print("--------- Testing the baseline... ---------")
+loss_fn = nn.MSELoss()
+test_before_retraining(test_dataloader, model, loss_fn, no_samples=200, plot_predictions=True)
 print("--------- Done ---------")
