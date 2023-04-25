@@ -1,14 +1,14 @@
-import torch
+import os
 from torch.utils.data import DataLoader
 import numpy as np
 import parser
-from a1.dataset import Dataset
+from case118.dataset import Dataset
 import shap
 
 args = parser.parse_arguments()
 device = "cpu"
 s = args.s  # this script currently works only with s=1
-compute_shap_for_val = False
+compute_shap_for_val = False if os.path.isfile('shap_values_val.npy') else True
 
 
 def get_incr_data_and_shap_values(dataloader, model, loss_fn, voltage_threshold=0.3):

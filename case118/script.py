@@ -8,10 +8,10 @@ import shap
 import numpy as np
 import matplotlib.pyplot as plt
 import parser
-from a1.dataset import Dataset
-from a1.network import ANN
-from a1.train import train
-from a1.test import test
+from case118.dataset import Dataset
+from case118.network import ANN
+from case118.train import train
+from case118.test import test
 
 args = parser.parse_arguments()
 torch.manual_seed(42)
