@@ -1,4 +1,6 @@
 import os
+
+import torch
 from torch.utils.data import DataLoader
 import numpy as np
 import parser
@@ -24,6 +26,13 @@ def get_incr_data_and_shap_values(dataloader, model, loss_fn, voltage_threshold=
         # y = y.detach().numpy()
         pred = pred.detach().numpy()
         mae_per_row = abs(y[:, :128] - pred[:, :128]).mean(axis=1)
+        while True:
+            above_threshold_index = mae_per_row >= voltage_threshold
+            if sum(above_threshold_index) <= 60:
+                print(sum(above_threshold_index))
+                break
+            else:
+                voltage_threshold += .01
         above_threshold_index = mae_per_row >= voltage_threshold
         under_threshold_index = ~above_threshold_index
 
@@ -53,8 +62,9 @@ def get_incr_data_and_shap_values(dataloader, model, loss_fn, voltage_threshold=
 def retrain(dataloader, weights, model, loss_fn, optimizer):
     size = len(dataloader.dataset)
     model.train()
-    #weights = torch.ones(58)
+
     for batch, (X, y) in enumerate(dataloader):
+        #weights = torch.ones(len(X))
         X, y = X.to(device), y.to(device)
 
         # Compute prediction error
@@ -66,7 +76,3 @@ def retrain(dataloader, weights, model, loss_fn, optimizer):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
-        #if batch == (len(dataloader) - 1):
-        #    loss, current = loss.item(), (batch + 1) * len(X)
-        #    print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")

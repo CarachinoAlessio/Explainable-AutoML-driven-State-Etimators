@@ -54,10 +54,10 @@ if verbose:
 split_train = int(0.4 * data_x.shape[0])
 test_x = data_x[:split_train, :]
 test_y = data_y[:split_train, :]
-train_x = data_x[split_train:, :]
-train_y = data_y[split_train:, :]
+train_x = data_x[int(0.5 * split_train):, :]
+train_y = data_y[int(0.5 * split_train):, :]
 # separate them into training 80%, val 20%
-train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.2, shuffle=False)
+train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=False)
 
 if verbose:
     print(train_x.shape)
@@ -89,7 +89,7 @@ loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 
 if train_time:
-    epochs = 100
+    epochs = 30
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
@@ -97,6 +97,7 @@ if train_time:
             test_before_retraining(val_dataloader, model, loss_fn, plot_predictions=True)
     print("Done!")
     torch.save(model.state_dict(), "model_baseline.pth")
+    torch.save(optimizer.state_dict(), "optimizer.pth")
     print("Saved PyTorch Model State to model_baseline.pth")
 
 
@@ -108,21 +109,24 @@ test_before_retraining(test_dataloader, model, loss_fn, no_samples=200, plot_pre
 if retrain_time:
     print("--------- Starting the retraining process ---------")
     incr_dataloader, shap_list = get_incr_data_and_shap_values(val_dataloader, model, loss_fn, voltage_threshold=0.27)
-    shap_multiplier = 10
-    shap_sum = np.sum(shap_list[:118], axis=2).T  # result size: (58, 118)
+    #shap_multiplier = 1
+    #shap_offset = 0.2
+    shap_sum = np.sum(shap_list[:118], axis=2).T  # result size: (56, 118)
     shap_sum = np.sum(shap_sum, axis=1)
 
-    weights = torch.from_numpy(shap_multiplier * abs((shap_sum - np.mean(shap_sum)) / np.std(shap_sum)))
+    weights = torch.from_numpy(abs((shap_sum - np.mean(shap_sum)) / np.std(shap_sum)))
 
-    epochs = 1000
+    epochs = 100
     loss_fn = nn.MSELoss(reduction='none')
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    optimizer.load_state_dict(torch.load('optimizer.pth'))
     for t in range(epochs):
         retrain(incr_dataloader, weights, model, loss_fn, optimizer)
     print("Done!")
     torch.save(model.state_dict(), "retrained_model.pth")
     print("Saved PyTorch Model State to retrained_model.pth")
 
-if test_retrained:
+if test_retrained or True:
     model.load_state_dict(torch.load("retrained_model.pth"))
     print("--------- Testing the retrained model... ---------")
     loss_fn = nn.MSELoss()
