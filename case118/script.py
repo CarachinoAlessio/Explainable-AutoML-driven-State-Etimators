@@ -77,7 +77,7 @@ if verbose:
     print(model)
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 if train_time:
     epochs = 100
