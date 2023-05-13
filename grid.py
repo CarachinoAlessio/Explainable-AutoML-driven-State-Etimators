@@ -12,6 +12,14 @@ from sklearn.metrics import mean_squared_error
 from sklearn.neural_network import MLPRegressor
 from time import time
 
+
+grid_code = "1-MV-urban--1-sw"
+net = sb.get_simbench_net(grid_code)
+profiles = sb.get_absolute_values(net, profiles_instead_of_study_cases=True)
+
+print(profiles.keys())
+print(net)
+print(list(net["subnets"].keys()))
 '''
 grid_code = "1-HV-urban--0-sw"
 net = sb.get_simbench_net(grid_code)
@@ -68,7 +76,7 @@ np.save("y_test.npy", y_test)
 print(X.shape)
 print(X_train.shape)
 print(X_test.shape)
-'''
+
 
 # sgen_p, load_p, load_q
 X_train = np.load("X_train.npy")
@@ -101,3 +109,4 @@ t0 = time()
 y_predict = ann.predict(X_test)
 t1 = time() - t0
 print(f"ANN time: {t1:.2f}")
+'''
