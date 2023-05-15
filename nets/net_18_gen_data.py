@@ -4,6 +4,7 @@ import pandapower as pp
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 net = Network_18_nodes_data()
 # simple_plot(net, plot_sgens=True, plot_loads=True)
@@ -16,30 +17,21 @@ load_profiles_q = 0.5 + np.random.rand(600, len(net.load))
 
 pp.runpp(net)
 
-# print(net.res_bus)
+
 res_p_mw = list([net.res_bus["p_mw"].values])
 res_q_mvar = list([net.res_bus["q_mvar"].values])
 
-measured_p_mw = list(np.random.normal([net.res_bus["p_mw"].values], 0.003))
-measured_q_mvar = list(np.random.normal([net.res_bus["q_mvar"].values], 0.003))
-
 v_bus_indices = [0, 3, 5, 10, 15]
 res_vm_pu = list([net.res_bus["vm_pu"].values[v_bus_indices]])
-measured_vm_pu = list(np.random.normal([net.res_bus["vm_pu"].values[v_bus_indices]], 0.003))
 
 res_all_vm_pu = list([net.res_bus["vm_pu"].values])
-measured_all_vm_pu = list(np.random.normal([net.res_bus["vm_pu"].values], 0.003))
-
 
 p_q_indices = [0, 3, 6, 10, 11, 13, 15]
 res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
-measured_p_mw_lines = list(np.random.normal([net.res_line["p_from_mw"].values[p_q_indices]], 0.003))
-measured_q_mvar_lines = list(np.random.normal([net.res_line["q_from_mvar"].values[p_q_indices]], 0.003))
 
-# res = list([net.res_bus["vm_pu"].values])
 
-for p_factor, q_factor in zip(load_profiles_p, load_profiles_q):
+for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=600):
 
     for i in range(len(net.load.p_mw)):
         net.load.p_mw[i] = net.load.p_mw[i] * p_factor[i]
@@ -57,15 +49,6 @@ for p_factor, q_factor in zip(load_profiles_p, load_profiles_q):
     res_q_mvar_lines.append(net.res_line['q_from_mvar'].values[p_q_indices])
     res_all_vm_pu.append(net.res_bus["vm_pu"].values)
 
-    measured_p_mw.append(np.random.normal([net.res_bus["p_mw"].values], 0.003).flatten())
-    measured_q_mvar.append(np.random.normal([net.res_bus["q_mvar"].values], 0.003).flatten())
-    measured_vm_pu.append(np.random.normal([net.res_bus["vm_pu"].values[v_bus_indices]], 0.003).flatten())
-    measured_p_mw_lines.append(np.random.normal([net.res_line["p_from_mw"].values[p_q_indices]], 0.003).flatten())
-    measured_q_mvar_lines.append(np.random.normal([net.res_line["q_from_mvar"].values[p_q_indices]], 0.003).flatten())
-    measured_all_vm_pu.append(np.random.normal([net.res_bus["vm_pu"].values], 0.003).flatten())
-
-    # print(net.res_bus)
-    # res.append(net.res_bus["vm_pu"].values)
 
 '''
 plt.plot(np.array(measured_q_mvar_lines).T[0])
@@ -73,6 +56,15 @@ plt.plot(np.array(res_q_mvar_lines).T[0], linestyle='--', marker='.')
 plt.legend(['Meas', 'Act'])
 plt.show()
 '''
+
+# agguingo rumore introdotto dallo strumento di misura
+measured_p_mw = list(np.random.normal(res_p_mw, 0.003))
+measured_q_mvar = list(np.random.normal(res_q_mvar, 0.003))
+measured_vm_pu = list(np.random.normal(res_vm_pu, 0.003))
+measured_all_vm_pu = list(np.random.normal(res_all_vm_pu, 0.003))
+measured_p_mw_lines = list(np.random.normal(res_p_mw_lines, 0.003))
+measured_q_mvar_lines = list(np.random.normal(res_q_mvar_lines, 0.003))
+
 
 data_x = np.hstack((res_p_mw, res_q_mvar, res_vm_pu, res_p_mw_lines, res_q_mvar_lines))
 measured_data_x = np.hstack((measured_p_mw, measured_q_mvar, measured_vm_pu, measured_p_mw_lines, measured_q_mvar_lines))
