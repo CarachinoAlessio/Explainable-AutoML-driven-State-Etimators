@@ -50,13 +50,13 @@ if verbose:
     print(data_x.shape)
     print(data_y.shape)
 
-# separate them into training 60%, test 40%
+
 split_train = int(0.4 * data_x.shape[0])
 test_x = data_x[:split_train, :]
 test_y = data_y[:split_train, :]
 train_x = data_x[int(0.5 * split_train):, :]
 train_y = data_y[int(0.5 * split_train):, :]
-# separate them into training 80%, val 20%
+
 train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=False)
 
 if verbose:
