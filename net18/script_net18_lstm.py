@@ -10,7 +10,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import parser
 from case118.dataset import Dataset
-from case118.networks import ANN
+from case118.networks import ANN, LSTMStateEstimation
+from nets import Net18Dataset_LSTM
 from case118.train import train
 from torchmetrics import MeanAbsoluteError, MeanAbsolutePercentageError, MeanSquaredError
 import pandas as pd
@@ -35,71 +36,6 @@ device = (
 )
 print(f"Using {device} device")
 
-
-def get_incr_data_and_shap_values(dataloader, model, loss_fn, voltage_threshold=0.3):
-    num_batches = len(dataloader)
-    model.eval()
-    # with torch.no_grad():
-    incr_data_x = np.empty((0, 55))  # 55 is the size of input measurements
-    incr_data_y = np.empty((0, 18))  # 18 is the size of output measurements
-    for batch, (X, y) in enumerate(dataloader):
-        X, y = X.to(device), y.to(device)
-        pred = model(X)
-        # X = X.detach().numpy()
-        # y = y.detach().numpy()
-        pred = pred.detach().numpy()
-        mae_per_row = abs(y - pred).mean(axis=1)
-        while True:
-            above_threshold_index = mae_per_row >= voltage_threshold
-            if sum(above_threshold_index) <= 60:
-                print(sum(above_threshold_index))
-                break
-            else:
-                voltage_threshold += .01
-        above_threshold_index = mae_per_row >= voltage_threshold
-        under_threshold_index = ~above_threshold_index
-
-        incr_data_x_batch = X[above_threshold_index]
-        print(f"{len(X[above_threshold_index])}")
-        incr_data_y_batch = y[above_threshold_index]
-        incr_data_x = np.vstack((incr_data_x, incr_data_x_batch))
-        incr_data_y = np.vstack((incr_data_y, incr_data_y_batch))
-
-        compute_shap_for_val = True
-        if compute_shap_for_val:
-            explainer = shap.DeepExplainer(model, X[under_threshold_index][:100])
-            shap_values = explainer.shap_values(X[above_threshold_index])
-            print("Saving shap_values on file...")
-            with open('shap_values_val_net18.npy', 'wb') as f:
-                np.save(f, np.array(shap_values))
-        else:
-            print("Loading shap_values from file...")
-            with open('shap_values_val_net18.npy', 'rb') as f:
-                shap_values = list(np.load(f))
-        break
-
-    incr_data = Dataset(incr_data_x, incr_data_y)
-    incr_dataloader = DataLoader(incr_data, batch_size=int(len(incr_data) / s), drop_last=False)
-    return incr_dataloader, shap_values
-
-
-def retrain(dataloader, weights, model, loss_fn, optimizer):
-    size = len(dataloader.dataset)
-    model.train()
-
-    for batch, (X, y) in enumerate(dataloader):
-        #weights = torch.ones(len(X))
-        X, y = X.to(device), y.to(device)
-
-        # Compute prediction error
-        pred = model(X)
-        loss = loss_fn(pred, y).T * weights
-        loss = loss.T.mean()
-
-        # Backpropagation
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
 
 def test(dataloader, model, loss_fn, plot_predictions=False):
     num_batches = len(dataloader)
@@ -134,45 +70,11 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
     dt1 = pd.DataFrame(vmagnitudes_results, columns=columns)
     print(tabulate(dt1, headers='keys', tablefmt='psql', showindex=False))
 
-def test_after_retrain(dataloader, retrained_model, model, loss_fn, plot_predictions=False):
-    num_batches = len(dataloader)
-    retrained_model.eval()
-    model.eval()
-    test_loss = 0
-    with torch.no_grad():
-        for batch, (X, y) in enumerate(dataloader):
-            X, y = X.to(device), y.to(device)
-            pred = retrained_model(X)
-            baseline_pred = model(X)
-            test_loss += loss_fn(pred, y).item()
-            print(len(y[0]))
-            for j in range(len(y[0])):
-                if plot_predictions and batch == 0:
-                    plt.figure(figsize=(10,6))
-                    plt.plot(y[:, j])
-                    plt.plot(pred[:, j])
-                    plt.plot(baseline_pred[:, j])
-                    plt.xlabel('t')
-                    plt.ylabel('Voltage')
-                    plt.title(f'Voltage on node #{j} ')
-                    plt.legend(['Real', 'Estimated', 'Bef. retrain'])
-                    plt.show()
-    test_loss /= num_batches
-    mae = MeanAbsoluteError()
-    mape = MeanAbsolutePercentageError()
-    mse = MeanSquaredError()
-    columns = ["MAE", "MAPE", "RMSE"]
-    vmagnitudes_results = [[mae(pred, y), mape(pred, y),
-                            torch.sqrt(mse(pred, y))]]
 
-    print("------------------------------------------")
-    print(f"     V Magnitudes")
-    dt1 = pd.DataFrame(vmagnitudes_results, columns=columns)
-    print(tabulate(dt1, headers='keys', tablefmt='psql', showindex=False))
-
-
-data_x = np.load('../nets/net_18_data/measured_data_x.npy')
-data_y = np.load('../nets/net_18_data/data_y.npy')
+data_x = np.load('../nets/net_18_data/measured_data_x.npy').astype(np.double)
+data_y = np.load('../nets/net_18_data/data_y.npy').astype(np.double)
+data_x = data_x[:len(data_x)-1]
+data_y = data_y[:len(data_y)-1]
 #measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
 #measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
 
@@ -199,6 +101,7 @@ if verbose:
     print(val_x.shape)
     print(val_y.shape)
 
+'''
 train_data = Dataset(train_x, train_y)
 train_dataloader = DataLoader(train_data, batch_size=16, drop_last=False)
 
@@ -208,29 +111,48 @@ val_dataloader = DataLoader(val_data, batch_size=int(len(val_data) / s), drop_la
 test_data = Dataset(test_x, test_y)
 # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
 test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+'''
+sequence_length = 5
+train_data = Net18Dataset_LSTM.Net18Dataset_LSTM(train_x, train_y, sequence_length)
+train_dataloader = DataLoader(train_data, batch_size=32, drop_last=True)
+
+val_data = Net18Dataset_LSTM.Net18Dataset_LSTM(val_x, val_y, sequence_length)
+val_dataloader = DataLoader(val_data, drop_last=False)
+#val_dataloader = DataLoader(val_data, batch_size=int(len(val_data) / s), drop_last=False)
+
+
+test_data = Net18Dataset_LSTM.Net18Dataset_LSTM(test_x, test_y, sequence_length)
+#test_dataloader = DataLoader(test_data)
+test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+
 
 # Train the model
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 2500, num_classes).to(device)
+model = LSTMStateEstimation(input_shape, 32, num_classes).to(device)
+
 if verbose:
     print(model)
 
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-if train_time:
-    epochs = 30
+if train_time or True:
+    epochs = 100
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
         # test(test_dataloader, model, loss_fn)
     print("Done!")
-    torch.save(model.state_dict(), "model_net18.pth")
-    torch.save(optimizer.state_dict(), "optimizer.pth")
-    print("Saved PyTorch Model State to model.pth")
+    torch.save(model.state_dict(), "model_lstm_net18.pth")
+    torch.save(optimizer.state_dict(), "optimizer_lstm.pth")
+    print("Saved PyTorch Model State to model_lstm_net18.pth")
     test(test_dataloader, model, loss_fn, plot_predictions=True)
+
+
+'''
 elif shap_values_time or True:
     model.load_state_dict(torch.load("model_net18.pth"))
     test(test_dataloader, model, loss_fn, plot_predictions=False)
@@ -283,7 +205,7 @@ elif shap_values_time or True:
         fig.tight_layout()
         plt.show()
         print("All plots have been generated.")
-'''
+
 elif retrain_time:
     print("--------- Starting the retraining process ---------")
     incr_dataloader, shap_list = get_incr_data_and_shap_values(val_dataloader, model, loss_fn, voltage_threshold=0.07)

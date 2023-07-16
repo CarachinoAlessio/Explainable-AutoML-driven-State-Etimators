@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import parser
 from case118.dataset import Dataset
-from case118.network import ANN
+from case118.networks import ANN
 from case118.train import train
 from case118.test import test
 

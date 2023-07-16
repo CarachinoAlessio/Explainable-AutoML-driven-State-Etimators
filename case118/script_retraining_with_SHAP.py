@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 import parser
 from case118.dataset import Dataset
-from case118.network import ANN
+from case118.networks import ANN
 from case118.retrain import get_incr_data_and_shap_values, retrain
 from case118.train import train
 from case118.test import test_before_retraining
