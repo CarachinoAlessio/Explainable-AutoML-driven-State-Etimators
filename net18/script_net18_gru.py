@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import parser
 from case118.dataset import Dataset
-from case118.networks import ANN, LSTMStateEstimation
+from case118.networks import ANN, GRUStateEstimation
 from nets import Net18Dataset_LSTM
 from case118.train import train
 from torchmetrics import MeanAbsoluteError, MeanAbsolutePercentageError, MeanSquaredError
@@ -131,7 +131,7 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = LSTMStateEstimation(input_shape, 32, num_classes).to(device)
+model = GRUStateEstimation(input_shape, 32, num_classes).to(device)
 
 if verbose:
     print(model)
@@ -139,22 +139,22 @@ if verbose:
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-if train_time and not True:
+if train_time or True:
     epochs = 100
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
         # test(test_dataloader, model, loss_fn)
     print("Done!")
-    torch.save(model.state_dict(), "model_net18_lstm.pth")
-    torch.save(optimizer.state_dict(), "optimizer_lstm.pth")
-    print("Saved PyTorch Model State to model_lstm_net18.pth")
+    torch.save(model.state_dict(), "model_net18_gru.pth")
+    torch.save(optimizer.state_dict(), "optimizer_gru.pth")
+    print("Saved PyTorch Model State to model_net18_gru.pth")
     test(test_dataloader, model, loss_fn, plot_predictions=True)
 
 
 
 elif shap_values_time or True:
-    model.load_state_dict(torch.load("model_net18_lstm.pth"))
+    model.load_state_dict(torch.load("model_net18_gru.pth"))
     test(test_dataloader, model, loss_fn, plot_predictions=False)
 
     batch = next(iter(test_dataloader))

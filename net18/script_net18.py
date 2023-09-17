@@ -220,12 +220,11 @@ if verbose:
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-if train_time:
+if train_time or True:
     epochs = 30
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
-        # test(test_dataloader, model, loss_fn)
     print("Done!")
     torch.save(model.state_dict(), "model_net18.pth")
     torch.save(optimizer.state_dict(), "optimizer.pth")

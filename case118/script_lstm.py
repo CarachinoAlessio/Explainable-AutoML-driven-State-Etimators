@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import scipy
 import math
+
+from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 import shap
 
@@ -9,9 +11,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import parser
 from case118.dataset import Dataset
-from case118.networks import ANN
+from case118.networks import LSTMStateEstimation
 from case118.train import train
 from case118.test import test
+from nets import Net18Dataset_LSTM
 
 args = parser.parse_arguments()
 torch.manual_seed(42)
@@ -51,9 +54,31 @@ if verbose:
 # separate them into training 40%, test 60%
 split_train = int(0.6 * data_x.shape[0])
 test_x = data_x[:split_train, :]
-test_y = data_y[:split_train, :]
+test_y = data_y[:split_train, :caseNo]
 train_x = data_x[split_train:, :]
-train_y = data_y[split_train:, :]
+train_y = data_y[split_train:, :caseNo]
+
+'''
+m = train_x.mean(axis=0)
+s = train_x.std(axis=0)
+
+train_x = (train_x - train_x.mean(axis=0) )/ (train_x.std(axis=0) + 1e-6)
+
+#train_x = (train_x * (s+ 1e-6)) + m
+
+train_y = (train_y - train_y.mean(axis=0) )/ (train_y.std(axis=0) + 1e-6)
+test_x = (test_x - test_x.mean(axis=0) )/ (test_x.std(axis=0) + 1e-6)
+test_y = (test_y - test_y.mean(axis=0) )/ (test_y.std(axis=0) + 1e-6)
+'''
+# Train the model
+input_shape = train_x.shape[1]
+num_classes = train_y.shape[1]
+
+#model = ANN(input_shape, 2500, num_classes).to(device)
+model = LSTMStateEstimation(input_shape, 250, num_classes, num_layers=5, znorm=[train_x.mean(axis=0), train_y.mean(axis=0), train_x.std(axis=0), train_y.std(axis=0) ]).to(device)
+
+if verbose:
+    print(model)
 
 if verbose:
     print(train_x.shape)
@@ -61,36 +86,40 @@ if verbose:
     print(test_x.shape)
     print(test_y.shape)
 
-train_data = Dataset(train_x, train_y)
-train_dataloader = DataLoader(train_data, batch_size=100, drop_last=True)
+sequence_length = 5
+train_data = Net18Dataset_LSTM.Net18Dataset_LSTM(train_x, train_y, sequence_length)
 
-test_data = Dataset(test_x, test_y)
+#train_data = Dataset(train_x, train_y)
+train_dataloader = DataLoader(train_data, batch_size=32, drop_last=True)
+
+# test_data = Dataset(test_x, test_y)
 # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+test_data = Net18Dataset_LSTM.Net18Dataset_LSTM(test_x, test_y, sequence_length)
 test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 
-# Train the model
-input_shape = train_x.shape[1]
-num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 2500, num_classes).to(device)
-if verbose:
-    print(model)
+
+
 
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-if train_time:
-    epochs = 30
+if train_time or True:
+    epochs = 60
     for t in range(epochs):
+        best_loss = 1000
         print(f"Epoch {t + 1}\n-------------------------------")
-        train(train_dataloader, model, loss_fn, optimizer)
-        # test(test_dataloader, model, loss_fn)
+        l = train(train_dataloader, model, loss_fn, optimizer)
+        if l < best_loss:
+            best_loss = l
+            torch.save(model.state_dict(), "model_lstm.pth")
+            print("Saved PyTorch Model State to model.pth")
+        test(test_dataloader, model, loss_fn, plot_predictions=True)
     print("Done!")
-    torch.save(model.state_dict(), "model.pth")
-    print("Saved PyTorch Model State to model.pth")
+
 
 else:
-    model.load_state_dict(torch.load("model.pth"))
+    model.load_state_dict(torch.load("model_lstm.pth"))
     test(test_dataloader, model, loss_fn, plot_predictions=True)
 
     batch = next(iter(test_dataloader))
@@ -103,11 +132,11 @@ else:
         explainer = shap.DeepExplainer(model, background)
         shap_values = explainer.shap_values(to_be_explained)
         print("Saving shap_values on file...")
-        with open('shap_values.npy', 'wb') as f:
+        with open('shap_values_lstm.npy', 'wb') as f:
             np.save(f, np.array(shap_values))
     else:
         print("Loading shap_values from file...")
-        with open('shap_values.npy', 'rb') as f:
+        with open('shap_values_lstm.npy', 'rb') as f:
             shap_values = list(np.load(f))
 
         ## I am interested only in shap values, after 100 time instants, of voltage magnitudes of node #1 (50 time instants)
