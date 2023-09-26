@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 net = Network_18_nodes_data()
-# simple_plot(net, plot_sgens=True, plot_loads=True)
+simple_plot(net, plot_sgens=True, plot_loads=True)
 print(net)
 
 
@@ -40,8 +40,14 @@ def generate_numbers(time_instants, n_bus):
 # 600 timestep, ad ogni timestep i profili saranno aggiornati di un fattore moltiplicativo tra 0.5 e 1.5
 original_p_values = copy.deepcopy(net.load.p_mw)
 original_q_values = copy.deepcopy(net.load.q_mvar)
-# load_profiles_p = 0.5 + np.random.rand(600, len(net.load))
-# load_profiles_q = 0.5 + np.random.rand(600, len(net.load))
+
+'''
+load_profiles_p = 0.5 + np.random.rand(600, len(net.load))
+load_profiles_q = 0.5 + np.random.rand(600, len(net.load))
+plt.plot(load_profiles_q[:, 0], linewidth=0.5)
+plt.show()
+'''
+
 load_profiles_p = generate_numbers(600, len(net.load))
 load_profiles_q = generate_numbers(600, len(net.load))
 
@@ -77,7 +83,7 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=600)
     res_q_mvar_lines.append(net.res_line['q_from_mvar'].values[p_q_indices])
     res_all_vm_pu.append(net.res_bus["vm_pu"].values)
 
-# agguingo rumore introdotto dallo strumento di misura
+# aggiungo rumore introdotto dallo strumento di misura
 measured_p_mw = list(np.random.normal(res_p_mw, 0.003))
 measured_q_mvar = list(np.random.normal(res_q_mvar, 0.003))
 measured_vm_pu = list(np.random.normal(res_vm_pu, 0.003))
@@ -90,6 +96,16 @@ measured_data_x = np.hstack(
     (measured_p_mw, measured_q_mvar, measured_vm_pu, measured_p_mw_lines, measured_q_mvar_lines))
 data_y = res_all_vm_pu
 measured_data_y = measured_all_vm_pu
+
+
+plt.plot([i[0] for i in measured_p_mw])
+plt.plot([i[1] for i in measured_p_mw])
+plt.plot([i[2] for i in measured_p_mw])
+plt.plot([i[0] for i in measured_q_mvar])
+plt.plot([i[1] for i in measured_q_mvar])
+plt.plot([i[2] for i in measured_q_mvar])
+
+plt.show()
 
 np.save('./net_18_data/data_x.npy', data_x)
 np.save('./net_18_data/data_y.npy', data_y)

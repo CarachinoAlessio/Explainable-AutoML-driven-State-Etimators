@@ -39,7 +39,6 @@ device = (
 )
 print(f"Using {device} device")
 
-
 def test(dataloader, model, loss_fn, plot_predictions=False):
     num_batches = len(dataloader)
     model.eval()
@@ -147,15 +146,77 @@ X = X.to(device)
 with Gradient(model=model, composite=composite) as attributor:
     #plt.plot(X[:,0])
     #plt.show()
-    out, relevance = attributor(X[200], torch.eye(18)[[0]].squeeze())
+    out, relevance = attributor(X[100], torch.eye(18)[[0]].squeeze())
 
 relevance = relevance.numpy()
+'''
 relevance = relevance + abs(min(relevance.ravel()))
 norm_relevance = ((relevance - min(relevance)) / (max(relevance) - min(relevance)))
 
 print(relevance)
 plt.imshow(norm_relevance.reshape((5, 11)))
 plt.colorbar()
+'''
+relevance = abs(relevance)
+'''
+fig, ax = plt.subplots()
+labels = ['p_mw', 'q_mvar', 'vm_pu', 'p_mw_lines', 'q__mvar_lines']
+aggregate_data = [sum(relevance[:18])/18., sum(relevance[18:36])/18., sum(relevance[36:41])/5., sum(relevance[41:48])/7., sum(relevance[48:])/7.]
+ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
+'''
+
+
+
+p_indices = range(18)
+q_indices = range(18)
+v_bus_indices = [0, 3, 5, 10, 15]
+p_indices_lines = [0, 3, 6, 10, 11, 13, 15]
+q_indices_lines = [0, 3, 6, 10, 11, 13, 15]
+positioning = dict()
+positioning.setdefault('p_mw', 0)
+positioning.setdefault('q_mvar', 18)
+positioning.setdefault('vm_pu', 36)
+positioning.setdefault('p_mw_lines', 41)
+positioning.setdefault('q__mvar_lines', 48)
+
+
+labels = [str(i) for i in range(18)]
+aggregate_data = []
+for i in range(18):
+    data = 0.0
+    c = 0
+    for k in positioning.keys():
+
+        match k:
+            case 'p_mw':
+                data += relevance[positioning[k]+i]
+                c+=1
+            case 'q_mvar':
+                data += relevance[positioning[k]+i]
+                c+=1
+            case 'vm_pu':
+                if i in v_bus_indices:
+                    data += relevance[positioning[k] + v_bus_indices.index(i)]
+                    c+=1
+            case 'p_mw_lines':
+                if i in p_indices_lines:
+                    data += relevance[positioning[k] + p_indices_lines.index(i)]
+                    c+=1
+            case _:
+                if i in q_indices_lines:
+                    data += relevance[positioning[k] + q_indices_lines.index(i)]
+                    c+=1
+    aggregate_data.append(data/c)
+
+
+
+sorted_index = np.asarray(aggregate_data).argsort()[:12:-1]
+labels = list(np.asarray(labels)[sorted_index]) + ['altro']
+aggregate_data = list(np.asarray(aggregate_data)[sorted_index]) + [sum([j for i,j in enumerate(aggregate_data) if i not in sorted_index])]
+
+fig, ax = plt.subplots()
+ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
+
 
 plt.show()
 

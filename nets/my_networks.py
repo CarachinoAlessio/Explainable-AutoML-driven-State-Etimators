@@ -2,6 +2,8 @@ import pandapower as pp
 
 
 def Network_18_nodes_data():
+    # todo: make a class with methods to easily retrieve measurements types
+
     net = pp.create_empty_network(name="18bus_grid")
     pp.create_buses(net, 18, 11, min_vm_pu=0.95, max_vm_pu=1.05)
     pp.create_ext_grid(net, 0)
