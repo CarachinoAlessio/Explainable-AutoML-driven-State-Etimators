@@ -10,9 +10,15 @@ class ANN(nn.Module):
 
     def forward(self, x):
         # x = torch.sigmoid(self.hidden(x))
-        x = nn.functional.relu(self.hidden(x))
-        x = self.output(x)
-        return x
+        try:
+            x = nn.functional.relu(self.hidden(x))
+            x = self.output(x)
+            return x
+        except:
+            x = x.type(torch.FloatTensor)
+            x = nn.functional.relu(self.hidden(x))
+            x = self.output(x)
+            return x
 
 '''
 class LSTMStateEstimation(nn.Module):

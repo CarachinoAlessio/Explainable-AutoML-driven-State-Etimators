@@ -22,6 +22,7 @@ class Dataset(torch.utils.data.Dataset):
             self.X = torch.tensor(input, dtype=torch.float32).to(device)
             self.Y = torch.tensor(output, dtype=torch.float32).to(device)
         else:
+            # todo: fix the following code to enable znorm
             self.X = torch.tensor(
                 (input-self.mean)/self.std,
                 dtype=torch.float32
