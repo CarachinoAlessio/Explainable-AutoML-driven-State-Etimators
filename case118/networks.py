@@ -95,6 +95,7 @@ class GRUStateEstimation(nn.Module):
         super(GRUStateEstimation, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
+        self.znorm = znorm
 
         self.lstm = nn.GRU(input_size, hidden_size, num_layers, batch_first=True).double()
         self.fc = nn.Linear(hidden_size, output_size).double()

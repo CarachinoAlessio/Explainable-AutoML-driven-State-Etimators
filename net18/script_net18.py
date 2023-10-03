@@ -252,7 +252,7 @@ elif shap_values_time or True:
             shap_values = list(np.load(f))
 
         ## I am interested only in shap values, after 100 time instants, of voltage magnitudes of node #1 (50 time instants)
-        shap_values_node_1 = shap_values[5]
+        shap_values_node_1 = shap_values[0]
         shap.summary_plot(shap_values_node_1, plot_type="bar", max_display=12)
         shap.summary_plot(shap_values_node_1, plot_type="violin", max_display=12)
 

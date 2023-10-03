@@ -4,9 +4,9 @@ import scipy
 import math
 import lime
 import lime.lime_tabular
+from interpret.utils._unify_predict import unify_predict_fn
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-import shap
 import numpy as np
 import matplotlib.pyplot as plt
 import parser
@@ -16,7 +16,8 @@ from case118.train import train
 from torchmetrics import MeanAbsoluteError, MeanAbsolutePercentageError, MeanSquaredError
 import pandas as pd
 from tabulate import tabulate
-
+from interpret.blackbox import LimeTabular
+from interpret import show
 
 args = parser.parse_arguments()
 torch.manual_seed(42)
@@ -50,7 +51,7 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
             print(len(y[0]))
             for j in range(len(y[0])):
                 if plot_predictions and batch == 0:
-                    plt.figure(figsize=(10,6))
+                    plt.figure(figsize=(10, 6))
                     plt.plot(y[:, j])
                     plt.plot(pred[:, j])
                     plt.xlabel('t')
@@ -74,8 +75,8 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
 
 data_x = np.load('../nets/net_18_data/measured_data_x.npy')
 data_y = np.load('../nets/net_18_data/data_y.npy')
-#measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
-#measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
+# measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
+# measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
 
 if verbose:
     print(data_x.shape)
@@ -90,7 +91,6 @@ train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.
 
 test_x = data_x[split_train:, :]
 test_y = data_y[split_train:, :]
-
 
 if verbose:
     print(train_x.shape)
@@ -136,46 +136,57 @@ if train_time or True:
 model.load_state_dict(torch.load("model_net18.pth"))
 model.eval()
 
-
-
 (X, Y) = next(iter(test_dataloader))
 X = X.to(device)
 
 measurements = X
+
 estimations = model(measurements).detach().numpy()
 background = measurements[0:100].to(device)
 to_be_explained = measurements[100:101].to(device)
+y_to_explain = Y[100:101]
 
-#explainer = shap.DeepExplainer(model, background)
 explainer = lime.lime_tabular.LimeTabularExplainer(
     background.detach().numpy(),
     feature_names=[str(i) for i in range(55)],
-    class_names=[str(0)],
     verbose=True,
-    mode='regression'
+    mode='regression',
+
 )
 
 def wrapped_net(x):
-    out = model(torch.tensor(x)).detach().numpy()
+    out = model(torch.tensor(x)).detach().numpy()[:, 0]  # generate explanations only for regression of node #1
     return out
 
+# todo: the following code is an alternative way to extract feature contributions with LIME. Must be checked
+'''
+lime = LimeTabular(model=wrapped_net, data=background, feature_names=['F. ' + str(i) for i in range(55)])
+
+x_test = to_be_explained[0].detach().numpy().reshape((1, 55))
+y_test = y_to_explain.detach().numpy()[:, 0]
+lime_local = lime.explain_local(x_test, y_test)
+show(lime_local)
+'''
+
 test = to_be_explained[0].detach().numpy()
-exp = explainer.explain_instance(test, wrapped_net)
-# exp.save_to_file('lime_explanation.html')
-relevance = abs(np.asarray([float(i) for i in exp.domain_mapper.feature_values]))
+exp = explainer.explain_instance(test, wrapped_net, num_features=55)
+# exp.save_to_file('lime_explanationall.html')
+# relevance = abs(np.asarray([float(i) for i in exp.domain_mapper.feature_values]))
+relevance = abs(np.asarray([j for i, j in sorted(exp.local_exp[0], key=lambda i: i[0])]))
+norm_relevance = ((relevance - min(relevance)) / (max(relevance) - min(relevance)))
 
 
-#
-# relevance = abs(shap_values[0].ravel())
-# '''
-# fig, ax = plt.subplots()
-# labels = ['p_mw', 'q_mvar', 'vm_pu', 'p_mw_lines', 'q__mvar_lines']
-# aggregate_data = [sum(relevance[:18])/18., sum(relevance[18:36])/18., sum(relevance[36:41])/5., sum(relevance[41:48])/7., sum(relevance[48:])/7.]
-# ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
-# '''
-#
-#
-#
+print(relevance)
+plt.imshow(norm_relevance.reshape((5, 11)))
+plt.colorbar()
+
+'''
+fig, ax = plt.subplots()
+labels = ['p_mw', 'q_mvar', 'vm_pu', 'p_mw_lines', 'q__mvar_lines']
+aggregate_data = [sum(relevance[:18])/18., sum(relevance[18:36])/18., sum(relevance[36:41])/5., sum(relevance[41:48])/7., sum(relevance[48:])/7.]
+ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
+'''
+
 p_indices = range(18)
 q_indices = range(18)
 v_bus_indices = [0, 3, 5, 10, 15]
@@ -188,7 +199,6 @@ positioning.setdefault('vm_pu', 36)
 positioning.setdefault('p_mw_lines', 41)
 positioning.setdefault('q__mvar_lines', 48)
 
-
 labels = [str(i) for i in range(18)]
 aggregate_data = []
 for i in range(18):
@@ -196,9 +206,9 @@ for i in range(18):
     for k in positioning.keys():
         match k:
             case 'p_mw':
-                data += relevance[positioning[k]+i]
+                data += relevance[positioning[k] + i]
             case 'q_mvar':
-                data += relevance[positioning[k]+i]
+                data += relevance[positioning[k] + i]
             case 'vm_pu':
                 if i in v_bus_indices:
                     data += relevance[positioning[k] + v_bus_indices.index(i)]
@@ -210,20 +220,14 @@ for i in range(18):
                     data += relevance[positioning[k] + q_indices_lines.index(i)]
     aggregate_data.append(data)
 
-
 sorted_index = np.asarray(aggregate_data).argsort()[:12:-1]
 labels = list(np.asarray(labels)[sorted_index]) + ['altro']
-aggregate_data = list(np.asarray(aggregate_data)[sorted_index]) + [sum([j for i,j in enumerate(aggregate_data) if i not in sorted_index])]
+aggregate_data = list(np.asarray(aggregate_data)[sorted_index]) + [
+    sum([j for i, j in enumerate(aggregate_data) if i not in sorted_index])]
 
 fig, ax = plt.subplots()
 ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
 
-
-
-
 plt.show()
 
 print("--------- Done ---------")
-
-
-
