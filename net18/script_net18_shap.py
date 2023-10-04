@@ -15,9 +15,6 @@ from case118.train import train
 from torchmetrics import MeanAbsoluteError, MeanAbsolutePercentageError, MeanSquaredError
 import pandas as pd
 from tabulate import tabulate
-from zennit.composites import EpsilonGammaBox
-from zennit.canonizers import SequentialMergeBatchNorm
-from zennit.attribution import Gradient
 
 
 args = parser.parse_arguments()
@@ -135,6 +132,7 @@ if train_time or True:
     print("Saved PyTorch Model State to model.pth")
     test(test_dataloader, model, loss_fn, plot_predictions=True)
 '''
+
 model.load_state_dict(torch.load("model_net18.pth"))
 model.eval()
 
@@ -146,6 +144,7 @@ X = X.to(device)
 measurements = X
 estimations = model(measurements).detach().numpy()
 background = measurements[0:100].to(device)
+# background = shap.maskers.Independent(measurements.numpy(), max_samples=100)
 to_be_explained = measurements[100:101].to(device)
 
 explainer = shap.DeepExplainer(model, background)
@@ -158,22 +157,23 @@ print("Loading shap_values from file...")
 with open('shap_values_net18_SHAP.npy', 'rb') as f:
     shap_values = list(np.load(f))
 
-'''
-relevance = shap_values[0].ravel() + abs(min(shap_values[0].ravel()))
-norm_relevance = ((relevance - min(relevance)) / (max(relevance) - min(relevance)))
+relevance = abs(shap_values[0].ravel())
 
+
+norm_relevance = ((relevance - min(relevance)) / (max(relevance) - min(relevance)))
+'''
 print(relevance)
 plt.imshow(norm_relevance.reshape((5, 11)))
 plt.colorbar()
 '''
-relevance = abs(shap_values[0].ravel())
+
 '''
 fig, ax = plt.subplots()
 labels = ['p_mw', 'q_mvar', 'vm_pu', 'p_mw_lines', 'q__mvar_lines']
 aggregate_data = [sum(relevance[:18])/18., sum(relevance[18:36])/18., sum(relevance[36:41])/5., sum(relevance[41:48])/7., sum(relevance[48:])/7.]
 ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
+plt.show()
 '''
-
 
 
 p_indices = range(18)
