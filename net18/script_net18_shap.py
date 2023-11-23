@@ -35,6 +35,7 @@ device = (
     else "cpu"
 )
 print(f"Using {device} device")
+device = "cpu"
 
 
 def test(dataloader, model, loss_fn, plot_predictions=False):
@@ -45,6 +46,7 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
         for batch, (X, y) in enumerate(dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
+            # pred /= (1-0.5)
             test_loss += loss_fn(pred, y).item()
             print(len(y[0]))
             for j in range(len(y[0])):
@@ -142,7 +144,7 @@ loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
 if train_time or True:
-    epochs = 30
+    epochs = 35
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)

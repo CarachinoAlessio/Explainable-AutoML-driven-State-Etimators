@@ -3,7 +3,7 @@ import numpy as np
 from torch.utils.data import DataLoader
 
 from case118.networks import ANN
-from net18.scenarios import get_data_by_scenario
+from net18.scenarios import get_data_by_scenario_and_case
 from case118.dataset import Dataset
 
 
@@ -37,11 +37,13 @@ model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
 
 
-scenario1 = get_data_by_scenario(1)
-x = scenario1[0]
-x_hat = scenario1[1]
-y = scenario1[2]
-y_hat = scenario1[3]
+
+print('SCENARIO 1, CASE 1 VALIDATION')
+s1_c1_data = get_data_by_scenario_and_case(1, 1)
+x = s1_c1_data[0]
+x_hat = s1_c1_data[1]
+y = s1_c1_data[2]
+y_hat = s1_c1_data[3]
 
 test_data = Dataset(x, y)
 # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
@@ -51,4 +53,49 @@ with torch.no_grad():
     for batch, (X, y) in enumerate(test_dataloader):
         X, y = X.to(device), y.to(device)
         pred = model(X)
-        print(pred)
+        y = y.cpu().detach().numpy()
+        pred = pred.cpu().detach().numpy()
+        print(f'y: {y}\npred: {pred}\nstd: {np.sqrt(np.mean(np.square(y - pred)))}')
+
+
+
+print('SCENARIO 1, CASE 2 VALIDATION')
+s1_c1_data = get_data_by_scenario_and_case(1, 2)
+x = s1_c1_data[0]
+x_hat = s1_c1_data[1]
+y = s1_c1_data[2]
+y_hat = s1_c1_data[3]
+
+test_data = Dataset(x, y)
+# test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+with torch.no_grad():
+    for batch, (X, y) in enumerate(test_dataloader):
+        X, y = X.to(device), y.to(device)
+        pred = model(X)
+        y = y.cpu().detach().numpy()
+        pred = pred.cpu().detach().numpy()
+        print(f'y: {y}\npred: {pred}\nstd: {np.sqrt(np.mean(np.square(y - pred)))}')
+
+
+
+print('SCENARIO 1, CASE 3 VALIDATION')
+s1_c1_data = get_data_by_scenario_and_case(1, 3)
+x = s1_c1_data[0]
+x_hat = s1_c1_data[1]
+y = s1_c1_data[2]
+y_hat = s1_c1_data[3]
+
+test_data = Dataset(x, y)
+# test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+with torch.no_grad():
+    for batch, (X, y) in enumerate(test_dataloader):
+        X, y = X.to(device), y.to(device)
+        pred = model(X)
+        y = y.cpu().detach().numpy()
+        pred = pred.cpu().detach().numpy()
+        print(f'y: {y}\npred: {pred}\nstd: {np.sqrt(np.mean(np.square(y - pred)))}')
+

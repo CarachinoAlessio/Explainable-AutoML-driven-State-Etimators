@@ -6,6 +6,7 @@ import copy
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+import random
 
 net = Network_18_nodes_data()
 #simple_plot(net, plot_sgens=True, plot_loads=True)
@@ -16,7 +17,7 @@ def generate_numbers(time_instants, n_bus):
     res = np.zeros((n_bus, time_instants))
     for i in range(n_bus):
         # Definizione dei parametri
-        intervallo = np.arange(10000)
+        intervallo = np.arange(5000)
         frequenza = 0.07  # Regola la frequenza dell'andamento
         ampiezza = 3.5  # Regola l'ampiezza dell'andamento
         traslazione = 0.0  # Regola la traslazione verticale dell'andamento
@@ -47,10 +48,10 @@ plt.plot(load_profiles_q[:, 0], linewidth=0.5)
 plt.show()
 '''
 
-load_profiles_p = generate_numbers(10000, len(net.load))
-load_profiles_q = generate_numbers(10000, len(net.load))
+load_profiles_p = generate_numbers(5000, len(net.load))
+load_profiles_q = generate_numbers(5000, len(net.load))
 
-pp.runpp(net, numba=False)
+pp.runpp(net)
 
 res_p_mw = list([net.res_bus["p_mw"].values])
 res_q_mvar = list([net.res_bus["q_mvar"].values])
@@ -64,14 +65,22 @@ p_q_indices = [0, 3, 6, 10, 11, 13, 15]
 res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
 
-for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=10000):
-    # aggiorno load di p e q
-    for i in range(len(net.load.p_mw)):
-        net.load.p_mw[i] = original_p_values[i] * p_factor[i]
-        net.load.q_mvar[i] = original_q_values[i] * q_factor[i]
 
-    pp.runpp(net)
+for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=5000):
+    while True:
+        try:
+            # aggiorno load di p e q
+            for i in range(len(net.load.p_mw)):
+                # net.load.p_mw[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i] * p_factor[i]
+                # net.load.q_mvar[i] = random.choice([1., -1., 3., -3.]) * original_q_values[i] * q_factor[i]
 
+                net.load.p_mw[i] = random.uniform(-5., 5.) * original_p_values[i] * p_factor[i]
+                net.load.q_mvar[i] = random.uniform(-5., 5.) * original_q_values[i] * q_factor[i]
+
+            pp.runpp(net, max_iteration=10000)
+            break
+        except:
+            pass
     # for i in range(len(net.res_bus["vm_pu"].values)):
     #    pp.create_measurement(net, 'p', 'bus', net.res_bus["vm_pu"].values[i], 0.003, i)
 
