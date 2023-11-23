@@ -5,7 +5,6 @@ import math
 
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
-import shap
 import numpy as np
 import matplotlib.pyplot as plt
 import parser
@@ -87,10 +86,24 @@ split_train = int(0.6 * data_x.shape[0])
 train_x = data_x[:split_train, :]
 train_y = data_y[:split_train, :]
 
+x_mean = train_x.mean(axis=0)
+x_r_term = 1e-6
+x_stdev = train_x.std(axis=0)
+y_mean = train_y.mean(axis=0)
+y_r_term = 1e-6
+y_stdev = train_y.std(axis=0)
+
+train_x = (train_x - x_mean + x_r_term)/(x_stdev + x_r_term)
+train_y = (train_y - y_mean + y_r_term)/(y_stdev + y_r_term)
+
+
 train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=False)
 
 test_x = data_x[split_train:, :]
 test_y = data_y[split_train:, :]
+
+test_x = (test_x - x_mean + x_r_term)/(x_stdev + x_r_term)
+test_y = (test_y - y_mean + y_r_term)/(y_stdev + y_r_term)
 
 
 if verbose:
@@ -122,19 +135,19 @@ if verbose:
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-'''
-if train_time or True:
+train_time = False
+if train_time:
     epochs = 30
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
     print("Done!")
-    torch.save(model.state_dict(), "model_net18.pth")
-    torch.save(optimizer.state_dict(), "optimizer.pth")
-    print("Saved PyTorch Model State to model.pth")
+    torch.save(model.state_dict(), "model_net18_znorm.pth")
+    torch.save(optimizer.state_dict(), "optimizer_znorm.pth")
+    print("Saved PyTorch Model State to model_net18.pth")
     test(test_dataloader, model, loss_fn, plot_predictions=True)
-'''
-model.load_state_dict(torch.load("model_net18.pth"))
+
+model.load_state_dict(torch.load("model_net18_znorm.pth"))
 model.eval()
 
 canonizers = [SequentialMergeBatchNorm()]
@@ -146,8 +159,9 @@ X = X.to(device)
 with Gradient(model=model, composite=composite) as attributor:
     #plt.plot(X[:,0])
     #plt.show()
-    out, relevance = attributor(X[100], torch.eye(18)[[0]].squeeze())
-
+    out, relevance = attributor(X[100], torch.eye(18)[[1]].squeeze())
+# print(out.detach().numpy() )
+# print((out.detach().numpy()  * (y_stdev+y_r_term)) + (y_mean + y_r_term))
 relevance = relevance.numpy()
 '''
 relevance = relevance + abs(min(relevance.ravel()))

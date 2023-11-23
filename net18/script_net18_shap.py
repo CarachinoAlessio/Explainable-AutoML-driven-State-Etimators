@@ -70,9 +70,28 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
     dt1 = pd.DataFrame(vmagnitudes_results, columns=columns)
     print(tabulate(dt1, headers='keys', tablefmt='psql', showindex=False))
 
-
+'''
 data_x = np.load('../nets/net_18_data/measured_data_x.npy')
+data_x = np.delete(data_x, 18, axis=1)
+data_x = np.delete(data_x, 0, axis=1)
+
 data_y = np.load('../nets/net_18_data/data_y.npy')
+#measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
+#measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
+'''
+stable_x = np.load('../nets/net_18_data/measured_data_x_stable.npy')
+stable_x = np.delete(stable_x, 18, axis=1)
+stable_x = np.delete(stable_x, 0, axis=1)
+stable_y = np.load('../nets/net_18_data/data_y_stable.npy')
+
+alt_x = np.load('../nets/net_18_data/measured_data_x_alt.npy')
+alt_x = np.delete(alt_x, 18, axis=1)
+alt_x = np.delete(alt_x, 0, axis=1)
+alt_y = np.load('../nets/net_18_data/data_y_alt.npy')
+
+data_x = np.vstack((stable_x, alt_x))
+
+data_y = np.vstack((stable_y, alt_y))
 #measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
 #measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
 
@@ -81,14 +100,16 @@ if verbose:
     print(data_y.shape)
 
 # separate them into training 60%, test 40%
-split_train = int(0.6 * data_x.shape[0])
+split_train = int(0.999 * data_x.shape[0])
 train_x = data_x[:split_train, :]
 train_y = data_y[:split_train, :]
 
-train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=False)
+train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.001, shuffle=True)
 
-test_x = data_x[split_train:, :]
-test_y = data_y[split_train:, :]
+train_x, test_x, train_y, test_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=True)
+
+# test_x = data_x[split_train:, :]
+# test_y = data_y[split_train:, :]
 
 
 if verbose:
@@ -120,20 +141,18 @@ if verbose:
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-'''
 if train_time or True:
     epochs = 30
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
     print("Done!")
-    torch.save(model.state_dict(), "model_net18.pth")
-    torch.save(optimizer.state_dict(), "optimizer.pth")
-    print("Saved PyTorch Model State to model.pth")
+    torch.save(model.state_dict(), "model_net18_53.pth")
+    torch.save(optimizer.state_dict(), "optimizer_53.pth")
+    print("Saved PyTorch Model State")
     test(test_dataloader, model, loss_fn, plot_predictions=True)
-'''
 
-model.load_state_dict(torch.load("model_net18.pth"))
+model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
 
 

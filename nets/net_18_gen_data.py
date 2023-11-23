@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 net = Network_18_nodes_data()
-simple_plot(net, plot_sgens=True, plot_loads=True)
+#simple_plot(net, plot_sgens=True, plot_loads=True)
 print(net)
 
 
@@ -16,16 +16,15 @@ def generate_numbers(time_instants, n_bus):
     res = np.zeros((n_bus, time_instants))
     for i in range(n_bus):
         # Definizione dei parametri
-        intervallo = np.arange(600)
-        frequenza = 0.05  # Regola la frequenza dell'andamento
-        ampiezza = 1  # Regola l'ampiezza dell'andamento
-        traslazione = 0.1  # Regola la traslazione verticale dell'andamento
-        rumore = 0.2  # Regola la variazione casuale dell'andamento
+        intervallo = np.arange(10000)
+        frequenza = 0.07  # Regola la frequenza dell'andamento
+        ampiezza = 3.5  # Regola l'ampiezza dell'andamento
+        traslazione = 0.0  # Regola la traslazione verticale dell'andamento
+        rumore = 0.6  # Regola la variazione casuale dell'andamento
 
         # Generazione dell'andamento
         andamento = ampiezza * np.sin(frequenza * intervallo) + traslazione
         andamento += rumore * np.random.normal(-1, 1, size=andamento.shape)
-        andamento = abs(andamento) + .5
         res[i] = andamento
 
         '''
@@ -48,10 +47,10 @@ plt.plot(load_profiles_q[:, 0], linewidth=0.5)
 plt.show()
 '''
 
-load_profiles_p = generate_numbers(600, len(net.load))
-load_profiles_q = generate_numbers(600, len(net.load))
+load_profiles_p = generate_numbers(10000, len(net.load))
+load_profiles_q = generate_numbers(10000, len(net.load))
 
-pp.runpp(net)
+pp.runpp(net, numba=False)
 
 res_p_mw = list([net.res_bus["p_mw"].values])
 res_q_mvar = list([net.res_bus["q_mvar"].values])
@@ -65,7 +64,7 @@ p_q_indices = [0, 3, 6, 10, 11, 13, 15]
 res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
 
-for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=600):
+for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=10000):
     # aggiorno load di p e q
     for i in range(len(net.load.p_mw)):
         net.load.p_mw[i] = original_p_values[i] * p_factor[i]
@@ -107,7 +106,7 @@ plt.plot([i[2] for i in measured_q_mvar])
 
 plt.show()
 
-np.save('./net_18_data/data_x.npy', data_x)
-np.save('./net_18_data/data_y.npy', data_y)
-np.save('./net_18_data/measured_data_x.npy', measured_data_x)
-np.save('./net_18_data/measured_data_y.npy', measured_data_y)
+np.save('./net_18_data/data_x_alt.npy', data_x)
+np.save('./net_18_data/data_y_alt.npy', data_y)
+np.save('./net_18_data/measured_data_x_alt.npy', measured_data_x)
+np.save('./net_18_data/measured_data_y_alt.npy', measured_data_y)
