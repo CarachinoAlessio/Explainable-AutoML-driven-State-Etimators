@@ -73,7 +73,7 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=5000
             for i in range(len(net.load.p_mw)):
                 # net.load.p_mw[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i] * p_factor[i]
                 # net.load.q_mvar[i] = random.choice([1., -1., 3., -3.]) * original_q_values[i] * q_factor[i]
-
+                net.ext_grid.at[0, 'vm_pu'] = random.uniform(1., 1.05)
                 net.load.p_mw[i] = random.uniform(-5., 5.) * original_p_values[i] * p_factor[i]
                 net.load.q_mvar[i] = random.uniform(-5., 5.) * original_q_values[i] * q_factor[i]
 

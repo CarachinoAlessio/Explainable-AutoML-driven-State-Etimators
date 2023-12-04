@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import scipy
-import math
 
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
@@ -46,7 +44,7 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
         for batch, (X, y) in enumerate(dataloader):
             X, y = X.to(device), y.to(device)
             pred = model(X)
-            # pred /= (1-0.5)
+            # pred /= (1-0.2)
             test_loss += loss_fn(pred, y).item()
             print(len(y[0]))
             for j in range(len(y[0])):
@@ -71,6 +69,7 @@ def test(dataloader, model, loss_fn, plot_predictions=False):
     print(f"     V Magnitudes")
     dt1 = pd.DataFrame(vmagnitudes_results, columns=columns)
     print(tabulate(dt1, headers='keys', tablefmt='psql', showindex=False))
+    return torch.sqrt(mse(pred, y))
 
 '''
 data_x = np.load('../nets/net_18_data/measured_data_x.npy')
@@ -136,26 +135,43 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 2500, num_classes).to(device)
+model = ANN(input_shape, 500, num_classes).to(device)
 if verbose:
     print(model)
 
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+#optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
+
+losses = []
+torch.backends.cudnn.benchmark = True
 if train_time or True:
-    epochs = 35
+    epochs = 30
+    root_mse = 100
+    training_exception = True
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
-        train(train_dataloader, model, loss_fn, optimizer)
+        l = train(train_dataloader, model, loss_fn, optimizer)
+        losses.append(l)
+        if t > epochs - 10:
+            if (new_root_mse := test(test_dataloader, model, loss_fn, plot_predictions=False)) < root_mse:
+                training_exception = False
+                print("New improved model found! Saving...")
+                root_mse = new_root_mse
+                torch.save(model.state_dict(), "model_net18_53.pth")
+                torch.save(optimizer.state_dict(), "optimizer_53.pth")
+                print("Saved.")
+    if training_exception:
+        raise ("Found only bad models in the last 10 epochs. Please check training parameters.")
     print("Done!")
-    torch.save(model.state_dict(), "model_net18_53.pth")
-    torch.save(optimizer.state_dict(), "optimizer_53.pth")
-    print("Saved PyTorch Model State")
-    test(test_dataloader, model, loss_fn, plot_predictions=True)
 
+plt.plot(losses)
+plt.show()
+print("Testing the best model...")
 model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
+test(test_dataloader, model, loss_fn, plot_predictions=True)
 
 
 
