@@ -135,11 +135,12 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 500, num_classes).to(device)
+model = ANN(input_shape, 100, num_classes).to(device)
 if verbose:
     print(model)
 
 loss_fn = nn.MSELoss()
+#loss_fn = nn.L1Loss()
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 #optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
@@ -172,7 +173,7 @@ print("Testing the best model...")
 model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
 test(test_dataloader, model, loss_fn, plot_predictions=True)
-
+raise Exception('stop')
 
 
 (X, Y) = next(iter(test_dataloader))
