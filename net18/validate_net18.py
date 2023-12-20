@@ -99,7 +99,7 @@ for batch, (X, y) in enumerate(test_dataloader):
 
 
 '''
-print('SCENARIO 1, CASE 2 VALIDATION')
+# print('SCENARIO 1, CASE 2 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(1, 2)
 x = s1_c1_data[0]
 x_hat = s1_c1_data[1]
@@ -141,8 +141,9 @@ with torch.no_grad():
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
 
+'''
 
-print('SCENARIO 2, CASE 1 VALIDATION')
+# print('SCENARIO 2, CASE 1 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(2, 1)
 x = s1_c1_data[0]
 x_hat = s1_c1_data[1]
@@ -161,7 +162,7 @@ with torch.no_grad():
         pred = pred.cpu().detach().numpy()
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
-
+'''
 
 print('SCENARIO 2, CASE 2 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(2, 2)
@@ -206,8 +207,9 @@ with torch.no_grad():
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
 
 
+'''
 
-print('SCENARIO 3, CASE 1 VALIDATION')
+# print('SCENARIO 3, CASE 1 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(3, 1)
 x = s1_c1_data[0]
 x_hat = s1_c1_data[1]
@@ -227,7 +229,7 @@ with torch.no_grad():
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
 
-
+'''
 print('SCENARIO 3, CASE 2 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(3, 2)
 x = s1_c1_data[0]
@@ -270,10 +272,10 @@ with torch.no_grad():
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
 
+'''
 
 
-
-print('SCENARIO 4, CASE 1 VALIDATION')
+# print('SCENARIO 4, CASE 1 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(4, 1)
 x = s1_c1_data[0]
 x_hat = s1_c1_data[1]
@@ -292,7 +294,7 @@ with torch.no_grad():
         pred = pred.cpu().detach().numpy()
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
-
+'''
 
 print('SCENARIO 4, CASE 2 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(4, 2)
@@ -335,10 +337,10 @@ with torch.no_grad():
         pred = pred.cpu().detach().numpy()
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
+'''
 
 
-
-print('SCENARIO 5, CASE 1 VALIDATION')
+# print('SCENARIO 5, CASE 1 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(5, 1)
 x = s1_c1_data[0]
 x_hat = s1_c1_data[1]
@@ -358,7 +360,7 @@ with torch.no_grad():
         # print(f'y: {y}\npred: {pred}')
         print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
 
-
+'''
 print('SCENARIO 5, CASE 2 VALIDATION')
 s1_c1_data = get_data_by_scenario_and_case(5, 2)
 x = s1_c1_data[0]
@@ -412,4 +414,4 @@ VALID_DEBUG = np.vstack((
 
 ))
 
-print('ciao')
+print('debug')

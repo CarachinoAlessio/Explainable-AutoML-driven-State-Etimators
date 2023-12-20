@@ -5,20 +5,24 @@ import torch.nn as nn
 class ANN(nn.Module):
     def __init__(self, n_input, n_hidden, n_output):
         super().__init__()
-        self.dropout = nn.Dropout(0.8)
-        self.bn1 = nn.BatchNorm1d(n_hidden)
-        self.relu = nn.ReLU()
+        self.dropout = nn.Dropout(0.2)
+        #self.bn1 = nn.BatchNorm1d(n_hidden)
         self.hidden = nn.Linear(n_input, n_hidden)
+        self.relu = nn.ReLU()
         #self.hidden2 = nn.Linear(n_hidden, n_hidden)
         self.output = nn.Linear(n_hidden, n_output)
 
     def forward(self, x):
         # x = torch.sigmoid(self.hidden(x))
         try:
+            #x = self.bn1(x)
+
+
+
             x = self.hidden(x)
-            x = self.bn1(x)
+            #x = self.dropout(x)
             x = self.relu(x)
-            x = self.dropout(x)
+
             x = self.output(x)
             return x
 

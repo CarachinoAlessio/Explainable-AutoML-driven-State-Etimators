@@ -16,17 +16,19 @@ print(net)
 def generate_numbers(time_instants, n_bus):
     res = np.zeros((n_bus, time_instants))
     for i in range(n_bus):
+
         # Definizione dei parametri
-        intervallo = np.arange(5000)
+        intervallo = np.arange(time_instants)
         frequenza = 0.07  # Regola la frequenza dell'andamento
-        ampiezza = 3.5  # Regola l'ampiezza dell'andamento
+        ampiezza = 2  # Regola l'ampiezza dell'andamento
         traslazione = 0.0  # Regola la traslazione verticale dell'andamento
-        rumore = 0.6  # Regola la variazione casuale dell'andamento
+        rumore = 0.3  # Regola la variazione casuale dell'andamento
 
         # Generazione dell'andamento
         andamento = ampiezza * np.sin(frequenza * intervallo) + traslazione
         andamento += rumore * np.random.normal(-1, 1, size=andamento.shape)
         res[i] = andamento
+        res[i][len(andamento)//2:] = 1
 
         '''
         plt.plot(intervallo, andamento)
@@ -42,14 +44,14 @@ original_p_values = copy.deepcopy(net.load.p_mw)
 original_q_values = copy.deepcopy(net.load.q_mvar)
 
 '''
-load_profiles_p = 0.5 + np.random.rand(600, len(net.load))
-load_profiles_q = 0.5 + np.random.rand(600, len(net.load))
+load_profiles_p = 0.5 + np.random.rand(4000, len(net.load))
+load_profiles_q = 0.5 + np.random.rand(4000, len(net.load))
 plt.plot(load_profiles_q[:, 0], linewidth=0.5)
 plt.show()
 '''
 
-load_profiles_p = generate_numbers(5000, len(net.load))
-load_profiles_q = generate_numbers(5000, len(net.load))
+load_profiles_p = generate_numbers(8000, len(net.load))
+load_profiles_q = generate_numbers(8000, len(net.load))
 
 pp.runpp(net)
 
@@ -66,16 +68,18 @@ res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
 
 
-for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=5000):
+for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=8000):
     while True:
         try:
+
+            net.ext_grid.at[0, 'vm_pu'] = random.uniform(0.95, 1.05)
             # aggiorno load di p e q
             for i in range(len(net.load.p_mw)):
                 # net.load.p_mw[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i] * p_factor[i]
-                # net.load.q_mvar[i] = random.choice([1., -1., 3., -3.]) * original_q_values[i] * q_factor[i]
-                net.ext_grid.at[0, 'vm_pu'] = random.uniform(1., 1.05)
-                net.load.p_mw[i] = random.uniform(-5., 5.) * original_p_values[i] * p_factor[i]
-                net.load.q_mvar[i] = random.uniform(-5., 5.) * original_q_values[i] * q_factor[i]
+                # net.load.q_mvar[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i]  * q_factor[i]
+
+                net.load.p_mw[i] = random.uniform(0., 1.5) * original_p_values[i]
+                net.load.q_mvar[i] = random.uniform(0., 1.5) * original_q_values[i]
 
             pp.runpp(net, max_iteration=10000)
             break
@@ -106,6 +110,7 @@ data_y = res_all_vm_pu
 measured_data_y = measured_all_vm_pu
 
 
+'''
 plt.plot([i[0] for i in measured_p_mw])
 plt.plot([i[1] for i in measured_p_mw])
 plt.plot([i[2] for i in measured_p_mw])
@@ -114,6 +119,7 @@ plt.plot([i[1] for i in measured_q_mvar])
 plt.plot([i[2] for i in measured_q_mvar])
 
 plt.show()
+'''
 
 np.save('./net_18_data/data_x_alt.npy', data_x)
 np.save('./net_18_data/data_y_alt.npy', data_y)
