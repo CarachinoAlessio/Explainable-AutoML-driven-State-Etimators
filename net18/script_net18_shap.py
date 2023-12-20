@@ -101,7 +101,7 @@ if verbose:
     print(data_y.shape)
 
 # separate them into training 60%, test 40%
-split_train = int(0.999 * data_x.shape[0])
+split_train = int(0.8 * data_x.shape[0])
 train_x = data_x[:split_train, :]
 train_y = data_y[:split_train, :]
 
@@ -122,7 +122,7 @@ if verbose:
     print(val_y.shape)
 
 train_data = Dataset(train_x, train_y)
-train_dataloader = DataLoader(train_data, batch_size=16, drop_last=False)
+train_dataloader = DataLoader(train_data, batch_size=8, drop_last=False)
 
 val_data = Dataset(val_x, val_y)
 val_dataloader = DataLoader(val_data, batch_size=int(len(val_data) / s), drop_last=False)
@@ -135,12 +135,13 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 100, num_classes).to(device)
+model = ANN(input_shape, 500, num_classes).to(device)
 if verbose:
     print(model)
 
+
 loss_fn = nn.MSELoss()
-#loss_fn = nn.L1Loss()
+#optimizer = torch.optim.RMSprop(model.parameters())
 optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 #optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
@@ -148,14 +149,14 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 losses = []
 torch.backends.cudnn.benchmark = True
 if train_time or True:
-    epochs = 30
+    epochs = 10
     root_mse = 100
     training_exception = True
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         l = train(train_dataloader, model, loss_fn, optimizer)
         losses.append(l)
-        if t > epochs - 10:
+        if t > epochs - 30:
             if (new_root_mse := test(test_dataloader, model, loss_fn, plot_predictions=False)) < root_mse:
                 training_exception = False
                 print("New improved model found! Saving...")
@@ -173,7 +174,7 @@ print("Testing the best model...")
 model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
 test(test_dataloader, model, loss_fn, plot_predictions=True)
-raise Exception('stop')
+
 
 
 (X, Y) = next(iter(test_dataloader))
