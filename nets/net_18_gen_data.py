@@ -55,8 +55,8 @@ load_profiles_q = generate_numbers(8000, len(net.load))
 
 pp.runpp(net)
 
-res_p_mw = list([net.res_bus["p_mw"].values])
-res_q_mvar = list([net.res_bus["q_mvar"].values])
+res_p_mw = list([net.res_bus["p_mw"].values[1:]])
+res_q_mvar = list([net.res_bus["q_mvar"].values[1:]])
 
 v_bus_indices = [0, 3, 5, 10, 15]
 res_vm_pu = list([net.res_bus["vm_pu"].values[v_bus_indices]])
@@ -78,8 +78,8 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=8000
                 # net.load.p_mw[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i] * p_factor[i]
                 # net.load.q_mvar[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i]  * q_factor[i]
 
-                net.load.p_mw[i] = random.uniform(0., 1.5) * original_p_values[i]
-                net.load.q_mvar[i] = random.uniform(0., 1.5) * original_q_values[i]
+                net.load.p_mw[i] = random.uniform(0., 1.5) * original_p_values[i] * p_factor[i]
+                net.load.q_mvar[i] = random.uniform(0., 1.5) * original_q_values[i] * q_factor[i]
 
             pp.runpp(net, max_iteration=10000)
             break
@@ -88,8 +88,8 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=8000
     # for i in range(len(net.res_bus["vm_pu"].values)):
     #    pp.create_measurement(net, 'p', 'bus', net.res_bus["vm_pu"].values[i], 0.003, i)
 
-    res_p_mw.append(net.res_bus["p_mw"].values)
-    res_q_mvar.append(net.res_bus["q_mvar"].values)
+    res_p_mw.append(net.res_bus["p_mw"].values[1:])
+    res_q_mvar.append(net.res_bus["q_mvar"].values[1:])
     res_vm_pu.append(net.res_bus["vm_pu"].values[v_bus_indices])
     res_p_mw_lines.append(net.res_line['p_from_mw'].values[p_q_indices])
     res_q_mvar_lines.append(net.res_line['q_from_mvar'].values[p_q_indices])

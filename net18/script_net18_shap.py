@@ -81,13 +81,9 @@ data_y = np.load('../nets/net_18_data/data_y.npy')
 #measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
 '''
 stable_x = np.load('../nets/net_18_data/measured_data_x_stable.npy')
-stable_x = np.delete(stable_x, 18, axis=1)
-stable_x = np.delete(stable_x, 0, axis=1)
 stable_y = np.load('../nets/net_18_data/data_y_stable.npy')
 
 alt_x = np.load('../nets/net_18_data/measured_data_x_alt.npy')
-alt_x = np.delete(alt_x, 18, axis=1)
-alt_x = np.delete(alt_x, 0, axis=1)
 alt_y = np.load('../nets/net_18_data/data_y_alt.npy')
 
 data_x = np.vstack((stable_x, alt_x))
