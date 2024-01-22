@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import time
 
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
@@ -13,7 +14,9 @@ from case118.train import train
 from torchmetrics import MeanAbsoluteError, MeanAbsolutePercentageError, MeanSquaredError
 import pandas as pd
 from tabulate import tabulate
+import seaborn as sns
 
+from net18.scenarios2 import get_data_by_scenario_and_case
 
 args = parser.parse_arguments()
 torch.manual_seed(42)
@@ -87,8 +90,24 @@ alt_x = np.load('../nets/net_18_data/measured_data_x_alt.npy')
 alt_y = np.load('../nets/net_18_data/data_y_alt.npy')
 
 data_x = np.vstack((stable_x, alt_x))
-
+#data_x = alt_x
+#data_y = alt_y
 data_y = np.vstack((stable_y, alt_y))
+
+s1_c1_data = get_data_by_scenario_and_case(1, 1)
+x = s1_c1_data[0].ravel()
+
+for j, i in enumerate(data_x.T):
+    #if j < 30:
+    #    continue
+    sns.displot(i, kde=True, bins=50).set(title=str(j))
+    plt.axvline(x=x[j], color='r', linestyle='-')
+    plt.tight_layout(pad=3.0)
+    plt.savefig(str(j))
+    plt.show()
+
+
+
 #measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
 #measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
 
@@ -101,7 +120,7 @@ split_train = int(0.8 * data_x.shape[0])
 train_x = data_x[:split_train, :]
 train_y = data_y[:split_train, :]
 
-train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.001, shuffle=True)
+train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.2, shuffle=True)
 
 train_x, test_x, train_y, test_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=True)
 
@@ -118,7 +137,7 @@ if verbose:
     print(val_y.shape)
 
 train_data = Dataset(train_x, train_y)
-train_dataloader = DataLoader(train_data, batch_size=8, drop_last=False)
+train_dataloader = DataLoader(train_data, batch_size=16, drop_last=True)
 
 val_data = Dataset(val_x, val_y)
 val_dataloader = DataLoader(val_data, batch_size=int(len(val_data) / s), drop_last=False)
@@ -138,14 +157,14 @@ if verbose:
 
 loss_fn = nn.MSELoss()
 #optimizer = torch.optim.RMSprop(model.parameters())
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 #optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
 
 losses = []
 torch.backends.cudnn.benchmark = True
 if train_time or True:
-    epochs = 10
+    epochs = 18
     root_mse = 100
     training_exception = True
     for t in range(epochs):

@@ -19,8 +19,8 @@ def generate_numbers(time_instants, n_bus):
 
         # Definizione dei parametri
         intervallo = np.arange(time_instants)
-        frequenza = 0.07  # Regola la frequenza dell'andamento
-        ampiezza = 2  # Regola l'ampiezza dell'andamento
+        frequenza = 0.02  # Regola la frequenza dell'andamento
+        ampiezza = 10  # Regola l'ampiezza dell'andamento
         traslazione = 0.0  # Regola la traslazione verticale dell'andamento
         rumore = 0.3  # Regola la variazione casuale dell'andamento
 
@@ -43,12 +43,6 @@ def generate_numbers(time_instants, n_bus):
 original_p_values = copy.deepcopy(net.load.p_mw)
 original_q_values = copy.deepcopy(net.load.q_mvar)
 
-'''
-load_profiles_p = 0.5 + np.random.rand(4000, len(net.load))
-load_profiles_q = 0.5 + np.random.rand(4000, len(net.load))
-plt.plot(load_profiles_q[:, 0], linewidth=0.5)
-plt.show()
-'''
 
 load_profiles_p = generate_numbers(8000, len(net.load))
 load_profiles_q = generate_numbers(8000, len(net.load))
@@ -63,23 +57,27 @@ res_vm_pu = list([net.res_bus["vm_pu"].values[v_bus_indices]])
 
 res_all_vm_pu = list([net.res_bus["vm_pu"].values])
 
+# p_q_indices = [0, 3, 6, 10, 11, 13, 15]
 p_q_indices = [0, 3, 6, 10, 11, 13, 15]
 res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
-
 
 for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=8000):
     while True:
         try:
 
             net.ext_grid.at[0, 'vm_pu'] = random.uniform(0.95, 1.05)
+
+
+            '''
             # aggiorno load di p e q
             for i in range(len(net.load.p_mw)):
-                # net.load.p_mw[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i] * p_factor[i]
-                # net.load.q_mvar[i] = random.choice([1., -1., 3., -3.]) * original_p_values[i]  * q_factor[i]
+                # net.load.p_mw[i] = original_p_values[i] * abs(p_factor[i])
+                # net.load.q_mvar[i] = original_q_values[i] * abs(q_factor[i])
 
-                net.load.p_mw[i] = random.uniform(0., 1.5) * original_p_values[i] * p_factor[i]
-                net.load.q_mvar[i] = random.uniform(0., 1.5) * original_q_values[i] * q_factor[i]
+                net.load.p_mw[i] = random.uniform(0.9, 1.1) * original_p_values[i]
+                net.load.q_mvar[i] = random.uniform(0.9, 1.1) * original_q_values[i]
+            '''
 
             pp.runpp(net, max_iteration=10000)
             break
@@ -96,6 +94,7 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=8000
     res_all_vm_pu.append(net.res_bus["vm_pu"].values)
 
 # aggiungo rumore introdotto dallo strumento di misura
+
 measured_p_mw = list(np.random.normal(res_p_mw, 0.003))
 measured_q_mvar = list(np.random.normal(res_q_mvar, 0.003))
 measured_vm_pu = list(np.random.normal(res_vm_pu, 0.003))
@@ -110,18 +109,8 @@ data_y = res_all_vm_pu
 measured_data_y = measured_all_vm_pu
 
 
-'''
-plt.plot([i[0] for i in measured_p_mw])
-plt.plot([i[1] for i in measured_p_mw])
-plt.plot([i[2] for i in measured_p_mw])
-plt.plot([i[0] for i in measured_q_mvar])
-plt.plot([i[1] for i in measured_q_mvar])
-plt.plot([i[2] for i in measured_q_mvar])
 
-plt.show()
-'''
-
-np.save('./net_18_data/data_x_alt.npy', data_x)
-np.save('./net_18_data/data_y_alt.npy', data_y)
-np.save('./net_18_data/measured_data_x_alt.npy', measured_data_x)
-np.save('./net_18_data/measured_data_y_alt.npy', measured_data_y)
+np.save('./net_18_data/data_x_stable.npy', data_x)
+np.save('./net_18_data/data_y_stable.npy', data_y)
+np.save('./net_18_data/measured_data_x_stable.npy', measured_data_x)
+np.save('./net_18_data/measured_data_y_stable.npy', measured_data_y)
