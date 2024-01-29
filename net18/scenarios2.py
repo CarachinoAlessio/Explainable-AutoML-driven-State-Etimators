@@ -16,11 +16,11 @@ def get_data_by_scenario_and_case(scenario, case):
     valori_veri_stima = dati_scheda['Valori veri stima'].tolist()
     valori_stimati = dati_scheda['Valori stimati'].tolist()
     x = np.hstack((
-        [valori_veri_misure[5:22]], [valori_veri_misure[22:39]], [valori_veri_misure[:5]], [valori_veri_misure[39:46]], [valori_veri_misure[46:]]
+        [list(-1. * np.asarray(valori_veri_misure[5:22]))], [list(-1. * np.asarray(valori_veri_misure[22:39]))], [valori_veri_misure[:5]], [valori_veri_misure[39:46]], [valori_veri_misure[46:]]
     ))
 
     x_hat = np.hstack((
-        [misure[5:22]], [misure[22:39]], [misure[:5]], [misure[39:46]], [misure[46:]]
+        [list(-1. * np.asarray(misure[5:22]))], [list(-1. * np.asarray(misure[22:39]))], [misure[:5]], [misure[39:46]], [misure[46:]]
     ))
     y = [valori_veri_stima[:18]]
     y_hat = [valori_stimati[:18]]
