@@ -20,15 +20,15 @@ def generate_numbers(time_instants, n_bus):
         # Definizione dei parametri
         intervallo = np.arange(time_instants)
         frequenza = 0.02  # Regola la frequenza dell'andamento
-        ampiezza = 10  # Regola l'ampiezza dell'andamento
+        ampiezza = 1  # Regola l'ampiezza dell'andamento
         traslazione = 0.0  # Regola la traslazione verticale dell'andamento
-        rumore = 0.3  # Regola la variazione casuale dell'andamento
+        rumore = 0.2  # Regola la variazione casuale dell'andamento
 
         # Generazione dell'andamento
         andamento = ampiezza * np.sin(frequenza * intervallo) + traslazione
         andamento += rumore * np.random.normal(-1, 1, size=andamento.shape)
         res[i] = andamento
-        res[i][len(andamento)//2:] = 1
+        #res[i][len(andamento)//2:] = 1
 
         '''
         plt.plot(intervallo, andamento)
@@ -42,6 +42,8 @@ def generate_numbers(time_instants, n_bus):
 # 600 timestep, ad ogni timestep i profili saranno aggiornati di un fattore moltiplicativo tra 0.5 e 1.5
 original_p_values = copy.deepcopy(net.load.p_mw)
 original_q_values = copy.deepcopy(net.load.q_mvar)
+original_sgen_p = copy.deepcopy(net.sgen.p_mw)
+original_sgen_q = copy.deepcopy(net.sgen.q_mvar)
 
 
 load_profiles_p = generate_numbers(8000, len(net.load))
@@ -68,18 +70,19 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=8000
 
             net.ext_grid.at[0, 'vm_pu'] = random.uniform(0.95, 1.05)
 
-
-            '''
             # aggiorno load di p e q
             for i in range(len(net.load.p_mw)):
-                # net.load.p_mw[i] = original_p_values[i] * abs(p_factor[i])
-                # net.load.q_mvar[i] = original_q_values[i] * abs(q_factor[i])
+                net.load.p_mw[i] = original_p_values[i] * abs(p_factor[i])
+                net.load.q_mvar[i] = original_q_values[i] * abs(q_factor[i])
 
-                net.load.p_mw[i] = random.uniform(0.9, 1.1) * original_p_values[i]
-                net.load.q_mvar[i] = random.uniform(0.9, 1.1) * original_q_values[i]
-            '''
+                #net.load.p_mw[i] = random.uniform(0.9, 1.1) * original_p_values[i]
+                #net.load.q_mvar[i] = random.uniform(0.9, 1.1) * original_q_values[i]
 
-            pp.runpp(net, max_iteration=10000)
+            for i in range(len(net.sgen.p_mw)):
+                net.sgen.p_mw[i] = random.random() * original_sgen_p[i]
+                net.sgen.q_mvar[i] = random.random() * original_sgen_q[i]
+
+            pp.runpp(net, max_iteration=5000)
             break
         except:
             pass
@@ -110,7 +113,7 @@ measured_data_y = measured_all_vm_pu
 
 
 
-np.save('./net_18_data/data_x_stable.npy', data_x)
-np.save('./net_18_data/data_y_stable.npy', data_y)
-np.save('./net_18_data/measured_data_x_stable.npy', measured_data_x)
-np.save('./net_18_data/measured_data_y_stable.npy', measured_data_y)
+np.save('./net_18_data/data_x_alt.npy', data_x)
+np.save('./net_18_data/data_y_alt.npy', data_y)
+np.save('./net_18_data/measured_data_x_alt.npy', measured_data_x)
+np.save('./net_18_data/measured_data_y_alt.npy', measured_data_y)

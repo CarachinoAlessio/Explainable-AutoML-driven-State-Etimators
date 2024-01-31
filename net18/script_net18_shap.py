@@ -89,23 +89,24 @@ stable_y = np.load('../nets/net_18_data/data_y_stable.npy')
 alt_x = np.load('../nets/net_18_data/measured_data_x_alt.npy')
 alt_y = np.load('../nets/net_18_data/data_y_alt.npy')
 
-data_x = np.vstack((stable_x, alt_x))
-#data_x = alt_x
-#data_y = alt_y
-data_y = np.vstack((stable_y, alt_y))
+#data_x = np.vstack((stable_x, alt_x))
+data_x = alt_x
+data_y = alt_y
+#data_y = np.vstack((stable_y, alt_y))
 
 s1_c1_data = get_data_by_scenario_and_case(1, 1)
 x = s1_c1_data[0].ravel()
 
+'''
 for j, i in enumerate(data_x.T):
     #if j < 30:
     #    continue
     sns.displot(i, kde=True, bins=50).set(title=str(j))
     plt.axvline(x=x[j], color='r', linestyle='-')
     plt.tight_layout(pad=3.0)
-    plt.savefig(str(j))
+    #plt.savefig(str(j))
     plt.show()
-
+'''
 
 
 #measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
