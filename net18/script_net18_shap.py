@@ -99,8 +99,8 @@ x = s1_c1_data[0].ravel()
 
 '''
 for j, i in enumerate(data_x.T):
-    #if j < 30:
-    #    continue
+    # if j < 30:
+        continue
     sns.displot(i, kde=True, bins=50).set(title=str(j))
     plt.axvline(x=x[j], color='r', linestyle='-')
     plt.tight_layout(pad=3.0)
@@ -151,7 +151,7 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 500, num_classes).to(device)
+model = ANN(input_shape, 2500, num_classes).to(device)
 if verbose:
     print(model)
 
@@ -165,7 +165,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 losses = []
 torch.backends.cudnn.benchmark = True
 if train_time or True:
-    epochs = 18
+    epochs = 30
     root_mse = 100
     training_exception = True
     for t in range(epochs):

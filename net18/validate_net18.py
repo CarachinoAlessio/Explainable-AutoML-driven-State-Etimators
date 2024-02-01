@@ -35,7 +35,7 @@ train_y = data_y
 input_shape = data_x.shape[1]
 num_classes = data_y.shape[1]
 
-model = ANN(input_shape, 500, num_classes)
+model = ANN(input_shape, 2500, num_classes)
 model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
 model = model.to(device)

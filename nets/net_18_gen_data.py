@@ -46,8 +46,8 @@ original_sgen_p = copy.deepcopy(net.sgen.p_mw)
 original_sgen_q = copy.deepcopy(net.sgen.q_mvar)
 
 
-load_profiles_p = generate_numbers(8000, len(net.load))
-load_profiles_q = generate_numbers(8000, len(net.load))
+load_profiles_p = generate_numbers(12000, len(net.load))
+load_profiles_q = generate_numbers(12000, len(net.load))
 
 pp.runpp(net)
 

@@ -5,7 +5,7 @@ import torch.nn as nn
 class ANN(nn.Module):
     def __init__(self, n_input, n_hidden, n_output):
         super().__init__()
-        self.dropout = nn.Dropout(0.15)
+        self.dropout = nn.Dropout(0.4)
         # self.bn1 = nn.BatchNorm1d(n_input)
         self.hidden = nn.Linear(n_input, n_hidden)
         self.relu = nn.ReLU()
