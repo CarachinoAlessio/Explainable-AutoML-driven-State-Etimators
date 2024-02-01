@@ -41,7 +41,7 @@ def report_results_by_scenario_and_case(model, device='cpu'):
     scenarios = 5
     cases = 3
 
-    model = ANN(53, 2500, 18)
+    model = ANN(53, 1500, 18)
     model.load_state_dict(torch.load("model_net18_53.pth"))
     model.eval()
     model = model.to(device)
@@ -91,7 +91,7 @@ def report_results_on_validation_files(model, device='cpu'):
     scenarios = 5
     cases = 3
 
-    model = ANN(53, 2500, 18)
+    model = ANN(53, 1500, 18)
     model.load_state_dict(torch.load("model_net18_53.pth"))
     model.eval()
     model = model.to(device)

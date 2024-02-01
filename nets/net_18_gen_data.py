@@ -46,8 +46,8 @@ original_sgen_p = copy.deepcopy(net.sgen.p_mw)
 original_sgen_q = copy.deepcopy(net.sgen.q_mvar)
 
 
-load_profiles_p = generate_numbers(20000, len(net.load))
-load_profiles_q = generate_numbers(20000, len(net.load))
+load_profiles_p = generate_numbers(30000, len(net.load))
+load_profiles_q = generate_numbers(30000, len(net.load))
 
 pp.runpp(net)
 
@@ -64,7 +64,7 @@ p_q_indices = [0, 3, 6, 10, 11, 13, 15]
 res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
 
-for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=20000):
+for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=30000):
     while True:
         try:
 
@@ -78,12 +78,12 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=2000
                 #net.load.p_mw[i] = random.uniform(0.9, 1.1) * original_p_values[i]
                 #net.load.q_mvar[i] = random.uniform(0.9, 1.1) * original_q_values[i]
 
-            bias = random.random() * 2 - 1
-            add_bias = random.random() > .5
+            bias = (random.random() * 2 - 1) / 2.
+            add_bias = (random.random() > .5) / 2.
             for i in range(len(net.sgen.p_mw)):
                 if add_bias:
-                    net.sgen.p_mw[i] = abs(bias + random.random()) * original_sgen_p[i]
-                    net.sgen.q_mvar[i] = abs(bias + random.random()) * original_sgen_q[i]
+                    net.sgen.p_mw[i] = min(1., abs(bias + random.random())) * original_sgen_p[i]
+                    net.sgen.q_mvar[i] = min(1., abs(bias + random.random())) * original_sgen_q[i]
                 else:
                     net.sgen.p_mw[i] = random.random() * original_sgen_p[i]
                     net.sgen.q_mvar[i] = random.random() * original_sgen_q[i]

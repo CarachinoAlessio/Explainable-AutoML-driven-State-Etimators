@@ -94,7 +94,6 @@ data_x = alt_x
 data_y = alt_y
 #data_y = np.vstack((stable_y, alt_y))
 
-
 '''
 for j, i in enumerate(data_x.T):
     #if j < 30:
@@ -108,7 +107,6 @@ for j, i in enumerate(data_x.T):
     plt.savefig(str(j))
     plt.show()
 '''
-
 #measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
 #measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
 
@@ -121,9 +119,9 @@ split_train = int(0.8 * data_x.shape[0])
 train_x = data_x[:split_train, :]
 train_y = data_y[:split_train, :]
 
-train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.2, shuffle=True)
+train_x, val_x, train_y, val_y = train_test_split(train_x, train_y, test_size=0.2, shuffle=True, random_state=42)
 
-train_x, test_x, train_y, test_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=True)
+train_x, test_x, train_y, test_y = train_test_split(train_x, train_y, test_size=0.3, shuffle=True, random_state=42)
 
 # test_x = data_x[split_train:, :]
 # test_y = data_y[split_train:, :]
@@ -151,7 +149,7 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 2500, num_classes).to(device)
+model = ANN(input_shape, 1500, num_classes).to(device)
 if verbose:
     print(model)
 
@@ -165,7 +163,7 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 losses = []
 torch.backends.cudnn.benchmark = True
 if train_time or True:
-    epochs = 30
+    epochs = 40
     root_mse = 100
     training_exception = True
     for t in range(epochs):
