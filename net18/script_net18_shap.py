@@ -94,20 +94,20 @@ data_x = alt_x
 data_y = alt_y
 #data_y = np.vstack((stable_y, alt_y))
 
-s1_c1_data = get_data_by_scenario_and_case(1, 1)
-x = s1_c1_data[0].ravel()
 
 '''
 for j, i in enumerate(data_x.T):
-    # if j < 30:
-        continue
+    #if j < 30:
+    #    continue
     sns.displot(i, kde=True, bins=50).set(title=str(j))
-    plt.axvline(x=x[j], color='r', linestyle='-')
+    for scenario in range(1, 6):
+        s_c_data = get_data_by_scenario_and_case(scenario, 1)
+        x = s_c_data[0].ravel()
+        plt.axvline(x=x[j], color='r', linestyle='-', linewidth=1.)
     plt.tight_layout(pad=3.0)
-    #plt.savefig(str(j))
+    plt.savefig(str(j))
     plt.show()
 '''
-
 
 #measured_x = np.load('../nets/net_18_data/measured_data_x.npy')
 #measured_y = np.load('../nets/net_18_data/measured_data_y.npy')
@@ -189,96 +189,91 @@ plt.show()
 print("Testing the best model...")
 model.load_state_dict(torch.load("model_net18_53.pth"))
 model.eval()
-test(test_dataloader, model, loss_fn, plot_predictions=True)
-
-
-
-(X, Y) = next(iter(test_dataloader))
-X = X.to(device)
-
-measurements = X
-estimations = model(measurements).detach().numpy()
-background = measurements[0:100].to(device)
-# background = shap.maskers.Independent(measurements.numpy(), max_samples=100)
-to_be_explained = measurements[100:101].to(device)
-
-explainer = shap.DeepExplainer(model, background)
-shap_values = explainer.shap_values(to_be_explained)
-print("Saving shap_values on file...")
-with open('shap_values_net18_SHAP.npy', 'wb') as f:
-    np.save(f, np.array(shap_values))
-
-print("Loading shap_values from file...")
-with open('shap_values_net18_SHAP.npy', 'rb') as f:
-    shap_values = list(np.load(f))
-
-relevance = abs(shap_values[0].ravel())
-
-
-norm_relevance = ((relevance - min(relevance)) / (max(relevance) - min(relevance)))
-'''
-print(relevance)
-plt.imshow(norm_relevance.reshape((5, 11)))
-plt.colorbar()
-'''
-
-'''
-fig, ax = plt.subplots()
-labels = ['p_mw', 'q_mvar', 'vm_pu', 'p_mw_lines', 'q__mvar_lines']
-aggregate_data = [sum(relevance[:18])/18., sum(relevance[18:36])/18., sum(relevance[36:41])/5., sum(relevance[41:48])/7., sum(relevance[48:])/7.]
-ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
-plt.show()
-'''
-
-
-p_indices = range(18)
-q_indices = range(18)
-v_bus_indices = [0, 3, 5, 10, 15]
-p_indices_lines = [0, 3, 6, 10, 11, 13, 15]
-q_indices_lines = [0, 3, 6, 10, 11, 13, 15]
-positioning = dict()
-positioning.setdefault('p_mw', 0)
-positioning.setdefault('q_mvar', 18)
-positioning.setdefault('vm_pu', 36)
-positioning.setdefault('p_mw_lines', 41)
-positioning.setdefault('q__mvar_lines', 48)
-
-
-labels = [str(i) for i in range(18)]
-aggregate_data = []
-for i in range(18):
-    data = 0.0
-    for k in positioning.keys():
-        match k:
-            case 'p_mw':
-                data += relevance[positioning[k]+i]
-            case 'q_mvar':
-                data += relevance[positioning[k]+i]
-            case 'vm_pu':
-                if i in v_bus_indices:
-                    data += relevance[positioning[k] + v_bus_indices.index(i)]
-            case 'p_mw_lines':
-                if i in p_indices_lines:
-                    data += relevance[positioning[k] + p_indices_lines.index(i)]
-            case _:
-                if i in q_indices_lines:
-                    data += relevance[positioning[k] + q_indices_lines.index(i)]
-    aggregate_data.append(data)
-
-
-sorted_index = np.asarray(aggregate_data).argsort()[:12:-1]
-labels = list(np.asarray(labels)[sorted_index]) + ['altro']
-aggregate_data = list(np.asarray(aggregate_data)[sorted_index]) + [sum([j for i,j in enumerate(aggregate_data) if i not in sorted_index])]
-
-fig, ax = plt.subplots()
-ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
-
-
-
-
-plt.show()
+test(test_dataloader, model, loss_fn, plot_predictions=False)
 
 print("--------- Done ---------")
+def later():
+    (X, Y) = next(iter(test_dataloader))
+    X = X.to(device)
+
+    measurements = X
+    estimations = model(measurements).detach().numpy()
+    background = measurements[0:100].to(device)
+    # background = shap.maskers.Independent(measurements.numpy(), max_samples=100)
+    to_be_explained = measurements[100:101].to(device)
+
+    explainer = shap.DeepExplainer(model, background)
+    shap_values = explainer.shap_values(to_be_explained)
+    print("Saving shap_values on file...")
+    with open('shap_values_net18_SHAP.npy', 'wb') as f:
+        np.save(f, np.array(shap_values))
+
+    print("Loading shap_values from file...")
+    with open('shap_values_net18_SHAP.npy', 'rb') as f:
+        shap_values = list(np.load(f))
+
+    relevance = abs(shap_values[0].ravel())
+
+    norm_relevance = ((relevance - min(relevance)) / (max(relevance) - min(relevance)))
+    '''
+    print(relevance)
+    plt.imshow(norm_relevance.reshape((5, 11)))
+    plt.colorbar()
+    '''
+
+    '''
+    fig, ax = plt.subplots()
+    labels = ['p_mw', 'q_mvar', 'vm_pu', 'p_mw_lines', 'q__mvar_lines']
+    aggregate_data = [sum(relevance[:18])/18., sum(relevance[18:36])/18., sum(relevance[36:41])/5., sum(relevance[41:48])/7., sum(relevance[48:])/7.]
+    ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
+    plt.show()
+    '''
+
+    p_indices = range(18)
+    q_indices = range(18)
+    v_bus_indices = [0, 3, 5, 10, 15]
+    p_indices_lines = [0, 3, 6, 10, 11, 13, 15]
+    q_indices_lines = [0, 3, 6, 10, 11, 13, 15]
+    positioning = dict()
+    positioning.setdefault('p_mw', 0)
+    positioning.setdefault('q_mvar', 18)
+    positioning.setdefault('vm_pu', 36)
+    positioning.setdefault('p_mw_lines', 41)
+    positioning.setdefault('q__mvar_lines', 48)
+
+    labels = [str(i) for i in range(18)]
+    aggregate_data = []
+    for i in range(18):
+        data = 0.0
+        for k in positioning.keys():
+            match k:
+                case 'p_mw':
+                    data += relevance[positioning[k] + i]
+                case 'q_mvar':
+                    data += relevance[positioning[k] + i]
+                case 'vm_pu':
+                    if i in v_bus_indices:
+                        data += relevance[positioning[k] + v_bus_indices.index(i)]
+                case 'p_mw_lines':
+                    if i in p_indices_lines:
+                        data += relevance[positioning[k] + p_indices_lines.index(i)]
+                case _:
+                    if i in q_indices_lines:
+                        data += relevance[positioning[k] + q_indices_lines.index(i)]
+        aggregate_data.append(data)
+
+    sorted_index = np.asarray(aggregate_data).argsort()[:12:-1]
+    labels = list(np.asarray(labels)[sorted_index]) + ['altro']
+    aggregate_data = list(np.asarray(aggregate_data)[sorted_index]) + [
+        sum([j for i, j in enumerate(aggregate_data) if i not in sorted_index])]
+
+    fig, ax = plt.subplots()
+    ax.pie(aggregate_data, labels=labels, autopct='%1.1f%%')
+
+    plt.show()
+
+
+
 
 
 
