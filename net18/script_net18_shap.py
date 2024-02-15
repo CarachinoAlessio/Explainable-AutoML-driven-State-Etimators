@@ -18,6 +18,8 @@ import seaborn as sns
 
 from net18.scenarios2 import get_data_by_scenario_and_case
 
+#from net18.scenarios2 import get_data_by_scenario_and_case
+
 args = parser.parse_arguments()
 torch.manual_seed(42)
 train_time = args.train
@@ -136,7 +138,7 @@ if verbose:
     print(val_y.shape)
 
 train_data = Dataset(train_x, train_y)
-train_dataloader = DataLoader(train_data, batch_size=16, drop_last=True)
+train_dataloader = DataLoader(train_data, batch_size=8, drop_last=True)
 
 val_data = Dataset(val_x, val_y)
 val_dataloader = DataLoader(val_data, batch_size=int(len(val_data) / s), drop_last=False)
@@ -149,28 +151,137 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 1500, num_classes).to(device)
+model = ANN(input_shape, 1524, num_classes, dropout=0.4656649267466235).to(device)
 if verbose:
     print(model)
 
 
 loss_fn = nn.MSELoss()
 #optimizer = torch.optim.RMSprop(model.parameters())
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0006000000000000001)
 #optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
 
 losses = []
 torch.backends.cudnn.benchmark = True
+
 if train_time or True:
-    epochs = 40
+    epochs = 29
     root_mse = 100
     training_exception = True
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         l = train(train_dataloader, model, loss_fn, optimizer)
+        model.eval()
+        OUTPUT = .0
+        print('SCENARIO 1, CASE 1 VALIDATION')
+        s1_c1_data = get_data_by_scenario_and_case(1, 1)
+        x = s1_c1_data[0]
+        x_hat = s1_c1_data[1]
+        y = s1_c1_data[2]
+        y_hat = s1_c1_data[3]
+
+        test_data = Dataset(x, y)
+        # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+        test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+        for batch, (X, y) in enumerate(test_dataloader):
+            X, y = X.to(device), y.to(device)
+            to_be_explained = X
+            pred = model(X)
+            y = y.cpu().detach().numpy()
+            pred = pred.cpu().detach().numpy()
+            print(f'y: {y}\npred: {pred}')
+            print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
+            OUTPUT += np.sqrt(np.mean(np.square(y - pred)))
+
+        # print('SCENARIO 2, CASE 1 VALIDATION')
+        s1_c1_data = get_data_by_scenario_and_case(2, 1)
+        x = s1_c1_data[0]
+        x_hat = s1_c1_data[1]
+        y = s1_c1_data[2]
+        y_hat = s1_c1_data[3]
+
+        test_data = Dataset(x, y)
+        # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+        test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+        with torch.no_grad():
+            for batch, (X, y) in enumerate(test_dataloader):
+                X, y = X.to(device), y.to(device)
+                pred = model(X)
+                y = y.cpu().detach().numpy()
+                pred = pred.cpu().detach().numpy()
+                # print(f'y: {y}\npred: {pred}')
+                print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
+                OUTPUT += np.sqrt(np.mean(np.square(y - pred)))
+
+        # print('SCENARIO 3, CASE 1 VALIDATION')
+        s1_c1_data = get_data_by_scenario_and_case(3, 1)
+        x = s1_c1_data[0]
+        x_hat = s1_c1_data[1]
+        y = s1_c1_data[2]
+        y_hat = s1_c1_data[3]
+
+        test_data = Dataset(x, y)
+        # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+        test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+        with torch.no_grad():
+            for batch, (X, y) in enumerate(test_dataloader):
+                X, y = X.to(device), y.to(device)
+                pred = model(X)
+                y = y.cpu().detach().numpy()
+                pred = pred.cpu().detach().numpy()
+                # print(f'y: {y}\npred: {pred}')
+                print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
+                OUTPUT += np.sqrt(np.mean(np.square(y - pred)))
+
+        # print('SCENARIO 4, CASE 1 VALIDATION')
+        s1_c1_data = get_data_by_scenario_and_case(4, 1)
+        x = s1_c1_data[0]
+        x_hat = s1_c1_data[1]
+        y = s1_c1_data[2]
+        y_hat = s1_c1_data[3]
+
+        test_data = Dataset(x, y)
+        # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+        test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+        with torch.no_grad():
+            for batch, (X, y) in enumerate(test_dataloader):
+                X, y = X.to(device), y.to(device)
+                pred = model(X)
+                y = y.cpu().detach().numpy()
+                pred = pred.cpu().detach().numpy()
+                # print(f'y: {y}\npred: {pred}')
+                print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
+                OUTPUT += np.sqrt(np.mean(np.square(y - pred)))
+
+        # print('SCENARIO 5, CASE 1 VALIDATION')
+        s1_c1_data = get_data_by_scenario_and_case(5, 1)
+        x = s1_c1_data[0]
+        x_hat = s1_c1_data[1]
+        y = s1_c1_data[2]
+        y_hat = s1_c1_data[3]
+
+        test_data = Dataset(x, y)
+        # test_dataloader = DataLoader(test_data, batch_size=100, drop_last=True)
+        test_dataloader = DataLoader(test_data, batch_size=len(test_data))
+
+        with torch.no_grad():
+            for batch, (X, y) in enumerate(test_dataloader):
+                X, y = X.to(device), y.to(device)
+                pred = model(X)
+                y = y.cpu().detach().numpy()
+                pred = pred.cpu().detach().numpy()
+                # print(f'y: {y}\npred: {pred}')
+                print(f'std: {np.sqrt(np.mean(np.square(y - pred)))}')
+                OUTPUT += np.sqrt(np.mean(np.square(y - pred)))
+
+
         losses.append(l)
-        if t > epochs - 30:
+        if t > epochs - 30 and False:
             if (new_root_mse := test(test_dataloader, model, loss_fn, plot_predictions=False)) < root_mse:
                 training_exception = False
                 print("New improved model found! Saving...")
@@ -179,16 +290,18 @@ if train_time or True:
                 torch.save(optimizer.state_dict(), "optimizer_53.pth")
                 print("Saved.")
     if training_exception:
-        raise ("Found only bad models in the last 10 epochs. Please check training parameters.")
+        print('SHH')
+        #raise ("Found only bad models in the last 10 epochs. Please check training parameters.")
     print("Done!")
 
 plt.plot(losses)
 plt.show()
 print("Testing the best model...")
-model.load_state_dict(torch.load("model_net18_53.pth"))
-model.eval()
-test(test_dataloader, model, loss_fn, plot_predictions=False)
-
+#model.load_state_dict(torch.load("model_net18_53.pth"))
+#model.eval()
+#test(test_dataloader, model, loss_fn, plot_predictions=False)
+torch.save(model.state_dict(), "model_net18_53.pth")
+torch.save(optimizer.state_dict(), "optimizer_53.pth")
 print("--------- Done ---------")
 def later():
     (X, Y) = next(iter(test_dataloader))

@@ -3,9 +3,9 @@ import torch.nn as nn
 
 
 class ANN(nn.Module):
-    def __init__(self, n_input, n_hidden, n_output):
+    def __init__(self, n_input, n_hidden, n_output, dropout=0.):
         super().__init__()
-        self.dropout = nn.Dropout(0.4)
+        self.dropout = nn.Dropout(dropout)
         # self.bn1 = nn.BatchNorm1d(n_input)
         self.hidden = nn.Linear(n_input, n_hidden)
         self.relu = nn.ReLU()
@@ -18,7 +18,7 @@ class ANN(nn.Module):
         #x = self.bn1(x)
 
         x = self.hidden(x)
-        #x = self.dropout(x)
+        x = self.dropout(x)
         x = self.relu(x)
 
         x = self.output(x)
