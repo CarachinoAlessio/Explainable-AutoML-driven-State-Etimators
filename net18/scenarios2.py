@@ -114,6 +114,21 @@ def report_results_on_validation_files(model, device='cpu'):
                     sheet.cell(row=j+2, column=7, value=value)
         workbook.save(f'./validation_data/Scenario{scenario}.xlsx')
 
+def report_preds_on_validation_files(preds, column_index, model_name, scenario, case=1):
+
+    workbook = openpyxl.load_workbook(f'./validation_data/Scenario{scenario}.xlsx')
+
+    sheet = workbook[f'Caso{case}']
+    data = list()
+
+
+    data.append(preds.ravel())
+    sheet.cell(row=1, column=column_index, value=f'Valori stimati {model_name}')
+    for i, entry in enumerate(data):
+        for j, value in enumerate(entry):
+            sheet.cell(row=j+2, column=column_index, value=value)
+    workbook.save(f'./validation_data/Scenario{scenario}.xlsx')
+
 report_results_on_validation_files(model=None)
 
 #report_results_by_scenario_and_case(model=None)
