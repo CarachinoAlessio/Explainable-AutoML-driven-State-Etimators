@@ -3,22 +3,28 @@ import torch.nn as nn
 
 
 class ANN(nn.Module):
-    def __init__(self, n_input, n_hidden, n_output):
+    def __init__(self, n_input, n_hidden, n_output, dropout=0.):
         super().__init__()
+        self.dropout = nn.Dropout(dropout)
+        # self.bn1 = nn.BatchNorm1d(n_input)
         self.hidden = nn.Linear(n_input, n_hidden)
+        self.relu = nn.ReLU()
+        #self.hidden2 = nn.Linear(n_hidden, n_hidden)
         self.output = nn.Linear(n_hidden, n_output)
 
     def forward(self, x):
         # x = torch.sigmoid(self.hidden(x))
-        try:
-            x = nn.functional.relu(self.hidden(x))
-            x = self.output(x)
-            return x
-        except:
-            x = x.type(torch.FloatTensor)
-            x = nn.functional.relu(self.hidden(x))
-            x = self.output(x)
-            return x
+
+        #x = self.bn1(x)
+
+        x = self.hidden(x)
+        x = self.dropout(x)
+        x = self.relu(x)
+
+        x = self.output(x)
+        return x
+
+
 
 '''
 class LSTMStateEstimation(nn.Module):

@@ -1,0 +1,7 @@
+{
+    "units": {"_type": "randint", "_value": [500, 3000]},
+    "epochs": {"_type": "randint", "_value": [15, 30]},
+    "dropout": {"_type": "uniform", "_value": [0.1, 0.5]},
+    "batch_size": {"_type": "choice", "_value": [8, 16, 32, 64]},
+    "lr": {"_type": "quniform", "_value": [0.00001, 0.001, 0.0001]}
+}

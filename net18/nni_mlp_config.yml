@@ -1,0 +1,16 @@
+experimentName: net_SE
+trialConcurrency: 2
+maxExperimentDuration: 16h
+maxTrialNumber: 1000
+searchSpaceFile: mlp_search_space.json
+useAnnotation: false
+trialCommand: python nni_mlp_optimizer.py
+trialCodeDirectory: .
+trialGpuNumber: 0
+tuner:
+  name: Anneal
+  classArgs:
+    optimize_mode: minimize
+trainingService:
+  platform: local
+  use_active_gpu: false
