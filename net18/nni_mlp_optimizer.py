@@ -95,7 +95,21 @@ def train(dataloader, model, loss_fn, optimizer):
             l = loss
     return l
 
+def test(dataloader, model, loss_fn):
+    num_batches = len(dataloader)
+    model.eval()
+    test_loss = 0
+    with torch.no_grad():
+        for batch, (X, y) in enumerate(dataloader):
+            X, y = X.to(device), y.to(device)
+            pred = model(X)
+            test_loss += loss_fn(pred, y).item()
 
+    test_loss /= num_batches
+    return test_loss
+
+
+'''
 def test(dataloader, model, loss_fn):
     def get_data_by_scenario_and_case(scenario, case):
         assert case > 0
@@ -244,7 +258,7 @@ def test(dataloader, model, loss_fn):
             OUTPUT += np.sqrt(np.mean(np.square(y - pred)))
 
     return OUTPUT
-
+'''
 
 def main_mlp_optimization(params):
     alt_x = np.load('../nets/net_18_data/measured_data_x_alt.npy')
@@ -291,14 +305,16 @@ def main_mlp_optimization(params):
     # optimizer = torch.optim.SGD(model.parameters(), lr=params['lr'])
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    mse_sum = 100
+    # mse_sum = 100
+    mse = 100
     for t in range(epochs):
         print(f"Epoch {t + 1}\n-------------------------------")
         train(train_dataloader, model, loss_fn, optimizer)
-        mse_sum = test(test_dataloader, model, loss_fn)
-        print(mse_sum)
-        nni.report_intermediate_result(mse_sum)
-    nni.report_final_result(mse_sum)
+        mse = test(test_dataloader, model, loss_fn)
+        #nni.report_intermediate_result(mse_sum)
+        nni.report_intermediate_result(mse)
+    nni.report_final_result(mse)
+    #nni.report_final_result(mse_sum)
 
 
 def get_params():

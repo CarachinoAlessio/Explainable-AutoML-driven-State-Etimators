@@ -151,14 +151,14 @@ test_dataloader = DataLoader(test_data, batch_size=len(test_data))
 input_shape = train_x.shape[1]
 num_classes = train_y.shape[1]
 
-model = ANN(input_shape, 1524, num_classes, dropout=0.4656649267466235).to(device)
+model = ANN(input_shape, 1580, num_classes, dropout=0.2302727528297988).to(device)
 if verbose:
     print(model)
 
 
 loss_fn = nn.MSELoss()
 #optimizer = torch.optim.RMSprop(model.parameters())
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0006000000000000001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0009000000000000001)
 #optimizer = torch.optim.Adagrad(model.parameters(), lr=0.001)
 
 
@@ -166,7 +166,7 @@ losses = []
 torch.backends.cudnn.benchmark = True
 
 if train_time or True:
-    epochs = 29
+    epochs = 25
     root_mse = 100
     training_exception = True
     for t in range(epochs):

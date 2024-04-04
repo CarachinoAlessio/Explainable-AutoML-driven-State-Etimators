@@ -91,7 +91,7 @@ def report_results_on_validation_files(model, device='cpu'):
     scenarios = 5
     cases = 3
 
-    model = ANN(53, 1524, 18, dropout=0.4656649267466235)
+    model = ANN(53, 1580, 18, dropout=0.2302727528297988)
     model.load_state_dict(torch.load("model_net18_53.pth"))
     model.eval()
     model = model.to(device)
