@@ -8,11 +8,11 @@ import torch
 from case118.networks import ANN
 
 
-def get_data_by_scenario_and_case(scenario, case):
+def get_data_by_scenario_and_case(scenario, case, net_name='net18v1'):
     assert case > 0
     assert scenario > 0
 
-    file_excel = f'./validation_data/Scenario{scenario}.xlsx'
+    file_excel = f'./validation_data/{net_name}/Scenario{scenario}.xlsx'
     xls = pd.ExcelFile(file_excel)
     scheda = xls.sheet_names[case-1]
     dati_scheda = pd.read_excel(file_excel, sheet_name=scheda)
@@ -20,15 +20,42 @@ def get_data_by_scenario_and_case(scenario, case):
     misure = dati_scheda['Misure'].tolist()
     valori_veri_stima = dati_scheda['Valori veri stima'].tolist()
     valori_stimati = dati_scheda['Valori stimati'].tolist()
-    x = np.hstack((
-        [list(-1. * np.asarray(valori_veri_misure[5:22]))], [list(-1. * np.asarray(valori_veri_misure[22:39]))], [valori_veri_misure[:5]], [valori_veri_misure[39:46]], [valori_veri_misure[46:]]
-    ))
 
-    x_hat = np.hstack((
-        [list(-1. * np.asarray(misure[5:22]))], [list(-1. * np.asarray(misure[22:39]))], [misure[:5]], [misure[39:46]], [misure[46:]]
-    ))
-    y = [valori_veri_stima[:18]]
-    y_hat = [valori_stimati[:18]]
+    if net_name == 'net18v1' or net_name == 'net18v4':
+        x = np.hstack((
+            [list(-1. * np.asarray(valori_veri_misure[5:22]))], [list(-1. * np.asarray(valori_veri_misure[22:39]))], [valori_veri_misure[:5]], [valori_veri_misure[39:46]], [valori_veri_misure[46:]]
+        ))
+
+        x_hat = np.hstack((
+            [list(-1. * np.asarray(misure[5:22]))], [list(-1. * np.asarray(misure[22:39]))], [misure[:5]], [misure[39:46]], [misure[46:]]
+        ))
+        y = [valori_veri_stima[:18]]
+        y_hat = [valori_stimati[:18]]
+    elif net_name == 'net18v2':
+        x = np.hstack((
+            [list(-1. * np.asarray(valori_veri_misure[4:17]))], [list(-1. * np.asarray(valori_veri_misure[17:30]))],
+            [valori_veri_misure[:4]], [valori_veri_misure[30:34]], [valori_veri_misure[34:]]
+        ))
+
+        x_hat = np.hstack((
+            [list(-1. * np.asarray(misure[4:17]))], [list(-1. * np.asarray(misure[17:30]))], [misure[:4]],
+            [misure[30:34]], [misure[34:]]
+        ))
+        y = [valori_veri_stima[:14]]
+        y_hat = [valori_stimati[:14]]
+
+    elif net_name == 'net18v3':
+        x = np.hstack((
+            [list(-1. * np.asarray(valori_veri_misure[5:19]))], [list(-1. * np.asarray(valori_veri_misure[19:33]))],
+            [valori_veri_misure[:5]], [valori_veri_misure[33:37]], [valori_veri_misure[37:]]
+        ))
+
+        x_hat = np.hstack((
+            [list(-1. * np.asarray(misure[5:19]))], [list(-1. * np.asarray(misure[19:33]))], [misure[:5]],
+            [misure[33:37]], [misure[37:]]
+        ))
+        y = [valori_veri_stima[:15]]
+        y_hat = [valori_stimati[:15]]
 
     sens_tab = pd.read_excel(file_excel, sheet_name='Sensitivity')
     sens = []
@@ -129,7 +156,7 @@ def report_preds_on_validation_files(preds, column_index, model_name, scenario, 
             sheet.cell(row=j+2, column=column_index, value=value)
     workbook.save(f'./validation_data/Scenario{scenario}.xlsx')
 
-report_results_on_validation_files(model=None)
+#report_results_on_validation_files(model=None)
 
 #report_results_by_scenario_and_case(model=None)
 

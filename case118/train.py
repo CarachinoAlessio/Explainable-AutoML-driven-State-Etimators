@@ -1,4 +1,4 @@
-device = "cpu"
+device = "cuda"
 
 
 def train(dataloader, model, loss_fn, optimizer):
