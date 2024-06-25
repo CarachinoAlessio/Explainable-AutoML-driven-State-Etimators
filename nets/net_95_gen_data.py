@@ -1,4 +1,4 @@
-from my_networks import Network_18_nodes_data
+from my_networks import Network_95_nodes_data
 from pandapower.plotting import simple_plot
 import pandapower as pp
 import pandas as pd
@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import random
 
-net = Network_18_nodes_data()
+net = Network_95_nodes_data()
 #simple_plot(net, plot_sgens=True, plot_loads=True)
 print(net)
 
@@ -54,13 +54,13 @@ pp.runpp(net)
 res_p_mw = list([net.res_bus["p_mw"].values[1:]])
 res_q_mvar = list([net.res_bus["q_mvar"].values[1:]])
 
-v_bus_indices = [0, 3, 5, 10, 15]
+v_bus_indices = [0, 10, 41, 81]
 res_vm_pu = list([net.res_bus["vm_pu"].values[v_bus_indices]])
 
 res_all_vm_pu = list([net.res_bus["vm_pu"].values])
 
 # p_q_indices = [0, 3, 6, 10, 11, 13, 15]
-p_q_indices = [0, 3, 6, 10, 11, 13, 15]
+p_q_indices = [0, 2, 10, 27, 41, 53, 82]
 res_p_mw_lines = list([net.res_line["p_from_mw"].values[p_q_indices]])
 res_q_mvar_lines = list([net.res_line["q_from_mvar"].values[p_q_indices]])
 
@@ -119,7 +119,7 @@ measured_data_y = measured_all_vm_pu
 
 
 
-np.save('./net_18_data/data_x_alt.npy', data_x)
-np.save('./net_18_data/data_y_alt.npy', data_y)
-np.save('./net_18_data/measured_data_x_alt.npy', measured_data_x)
-np.save('./net_18_data/measured_data_y_alt.npy', measured_data_y)
+np.save('./net_95_data/data_x_alt.npy', data_x)
+np.save('./net_95_data/data_y_alt.npy', data_y)
+np.save('./net_95_data/measured_data_x_alt.npy', measured_data_x)
+np.save('./net_95_data/measured_data_y_alt.npy', measured_data_y)
