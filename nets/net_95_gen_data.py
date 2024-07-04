@@ -104,12 +104,12 @@ for p_factor, q_factor in tqdm(zip(load_profiles_p, load_profiles_q), total=3000
 
 # aggiungo rumore introdotto dallo strumento di misura
 
-measured_p_mw = list(np.random.normal(res_p_mw, 0.003))
-measured_q_mvar = list(np.random.normal(res_q_mvar, 0.003))
-measured_vm_pu = list(np.random.normal(res_vm_pu, 0.003))
-measured_all_vm_pu = list(np.random.normal(res_all_vm_pu, 0.003))
-measured_p_mw_lines = list(np.random.normal(res_p_mw_lines, 0.003))
-measured_q_mvar_lines = list(np.random.normal(res_q_mvar_lines, 0.003))
+measured_p_mw = list(np.random.normal(loc=res_p_mw, scale=abs(np.asarray(res_p_mw))*0.02))
+measured_q_mvar = list(np.random.normal(loc=res_q_mvar, scale=abs(np.asarray(res_q_mvar))*0.02))
+measured_vm_pu = list(np.random.normal(loc=res_vm_pu, scale=abs(np.asarray(res_vm_pu))*0.01))
+measured_all_vm_pu = list(np.random.normal(loc=res_all_vm_pu, scale=abs(np.asarray(res_all_vm_pu))*0.01))
+measured_p_mw_lines = list(np.random.normal(loc=res_p_mw_lines, scale=abs(np.asarray(res_p_mw_lines))*0.02))
+measured_q_mvar_lines = list(np.random.normal(loc=res_q_mvar_lines, scale=abs(np.asarray(res_q_mvar_lines))*0.02))
 
 data_x = np.hstack((res_p_mw, res_q_mvar, res_vm_pu, res_p_mw_lines, res_q_mvar_lines))
 measured_data_x = np.hstack(
